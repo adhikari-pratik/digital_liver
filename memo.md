@@ -128,9 +128,9 @@ treatment→A/C) are soft/bidirectional and don't admit a clean form — the hon
 - **Clinical, decision-grade readouts (`clinical_metrics.py`).** Cirrhosis risk *ranking* is strong
   (**AUC 0.927**; predicted-F bins stratify cleanly: F_pred 0.6–0.8 → 52% truly cirrhotic). But
   thresholded event detection exposes a real failure: **decompensation recall 0.27** (median +14
-  months late), **cirrhosis-onset recall 0/20**, cirrhotic rate true 0.10 vs predicted 0.00 — the
-  point estimate under-shoots the tail. A **point-estimate limit** that aggregate MAE hid, and the
-  strongest argument for §8's distributional head.
+  months late), **cirrhosis-onset recall 0/20** — the point estimate under-shoots the tail. A
+  **point-estimate limit** that aggregate MAE hid, and the strongest argument for §8's distributional
+  head (now built and measured).
 - **The ceiling, plainly.** Within one generator, generalising = recovering the update rule, so the
   probe ranks models and shows *failure* but **cannot** settle "world model vs. generator-inverter" —
   that needs a second generator, not built.
@@ -150,24 +150,24 @@ Using portal hypertension P crossing a threshold as the decompensation proxy
 
 ## 8. Residual risk and what I would do next
 
-- **Probabilistic forecasting (the biggest gap now) — cheap fix already ruled out.** §6's tail miss is
-  structural: a point estimate cannot represent the outcome spread, so it regresses to the conservative
-  middle. I tested the obvious fix — a **5-model deep ensemble** — and it does *not* recover the tail
-  (ensemble-mean is *worse* than a single model; 90% intervals cover only **28%**, per-patient std
-  0.028, far too narrow — `ensemble_forecast.py`). Diagnostic: the uncertainty is **aleatoric** (hidden
-  susceptibility is unidentified from a short history → genuinely multiple futures), not epistemic, so
-  ensembling *can't* help. The right fix is a **distributional/generative head** — Neural-SDE, a
-  mixture-density/quantile head, or sampling the latent susceptibility. Sketched in
-  `models/distributional_head.py` (K mixture components each decoded through the *same* `ConstraintHead`,
-  so every sampled future stays constraint-valid — uncertainty in the mixture, guarantee untouched;
-  untrained by design, D0), and it is what makes the model clinically actionable.
+- **Probabilistic forecasting (the biggest gap now) — and I built the fix, not just named it.** §6's
+  tail miss is structural: a point estimate regresses to the conservative middle. The cheap fix fails —
+  a **5-model deep ensemble** does *not* recover the tail (mean *worse* than one model; 90% intervals
+  cover only **28%** — `ensemble_forecast.py`) because the uncertainty is **aleatoric** (hidden
+  susceptibility is unidentified from a short history), not epistemic. So I trained the real fix — a
+  **mixture-density head** (`mdn_forecast.py`, `models/distributional_head.py`): K components each
+  decoded through the *same* `ConstraintHead`, so every sampled future is constraint-valid (the sampler
+  draws a valid *mode*, never Gaussian noise that could break a ratchet). Measured over 3 seeds it
+  recovers what the ensemble couldn't — **cirrhosis recall 0.27 → 0.82** at the upper quantile — at **no
+  accuracy cost** (0.028 vs 0.033). Honest caveat: interval *calibration* stays seed-variable (coverage
+  0.70 ± 0.15) — the memoryless per-step sampler under-commits to a persistent "fast-progressor" branch,
+  so a persistent latent (or explicit calibration) is the last step.
 - **Validate JEPA where it pays.** Re-attach the real modality substrate; once observations carry
   un-forecastable high-dimensional detail, the latent should overtake raw-space prediction — the
   direct test of §2, and TS-JEPA is **already built** for it. (A first attempt with *separable*
-  nuisance failed — the raw model ignored the noise dims; the redesign uses *entangled* noise, D12.)
+  nuisance failed — the raw model ignored the noise dims; redesign uses *entangled* noise, D12.)
 - **Causal, not correlational, reasons.** Mask information flow to the causal edges and validate
-  counterfactuals against generator re-runs — attacking the §7 shortcut; plus structuring the remaining
-  soft couplings so the *joint* dynamics carry a guarantee.
+  counterfactuals against generator re-runs — attacking the §7 shortcut.
 
 **Bottom line:** I engaged JEPA for real — a minimal GRU-JEPA and the team's masked TS-JEPA — made
 both constraint-valid and auditable (TS-JEPA and baseline on-manifold by construction; the naive GRU

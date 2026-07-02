@@ -55,6 +55,8 @@ python clinical_metrics.py # decision metrics: event-timing error, cirrhosis AUC
 python probe_metrics.py    # is 0.033 actually good? flatline check vs naive, MVR=0, action-conditional ERCP stricture drop
 python make_training_curves.py # REAL train vs held-out learning curves per epoch -> figures/training_curve_*.png (+ .npz raw arrays)
 python ensemble_forecast.py # probabilistic forecasting: deep ensemble tested & RULED OUT (tail is aleatoric, needs a distributional head)
+python mdn_forecast.py     # the §8 fix, TRAINED (3 seeds): mixture-density head recovers cirrhosis recall 0.27->0.82 at no accuracy cost (D23)
+python smooth_head_test.py # tested Codex's clamp-free head: 0 violations but 0.039>0.033 -> clamp form kept (D23)
 python explain.py          # "why decompensation at month 30?" (baseline) -> figures/explain_decompensation.png
 python explain_jepa.py     # same audit, on the JEPA itself -> figures/explain_decompensation_jepa.png
 ```
@@ -69,7 +71,9 @@ python explain_jepa.py     # same audit, on the JEPA itself -> figures/explain_d
 | `models/constraints.py` | `ConstraintHead` — the by-construction guarantee, shared by all models |
 | `models/baseline.py` | `MonotoneStep` — the shipped model (memoryless, x-as-latent) |
 | `models/jepa.py` | `JEPA` — GRU latent-space predictor + VICReg + effective-rank metric |
-| `models/distributional_head.py` | **proposed** §8 fix (design sketch, untrained): mixture head, each component constraint-valid |
+| `models/distributional_head.py` | §8 fix: mixture head, each component constraint-valid (design); **trained & measured** in `mdn_forecast.py` |
+| `mdn_forecast.py` | trains the distributional head + MC rollout; 3-seed tail-recall/calibration result (D23) |
+| `smooth_head_test.py` | tested a clamp-free constraint head — kept the shipped clamp form (D23) |
 | `ts_jepa.py` | **masked, action-conditioned TS-JEPA** — the team's direction, built & measured (D16) |
 | `models/history.py` | `HistoryStep` — baseline + GRU history latent `w` |
 | `coupling.py`, `derived.py` | M←F·C coupling by construction; cirrhosis = g(F) derived readout |

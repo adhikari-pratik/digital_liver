@@ -355,6 +355,41 @@ Three points raised for the live readout; none was a bug (verified), all are dep
 
 ---
 
+## D23. Actually TRAINED the two ideas from D22's reviewer, on a branch — one won, one lost
+
+Prompted by "you didn't try anything new? try it in a new branch." Right call — D22 was polish; the
+substantive ideas were untested. Ran both as real experiments on `exp/distributional-head`, gated by
+multi-seed, shipped baseline on `main` untouched.
+
+- **Distributional head — TRAINED, and it works (`mdn_forecast.py`).** Built the full model the D22
+  sketch only described: encoder → `DistributionalHead` (K=4 mixture), trained by one-step mixture NLL
+  + short multistep NLL on the mixture mean, then **MC-rolled out** (sample a mode per step, S=300
+  trajectories) to get a predictive distribution over final F. **3-seed result:** ratchet MAE
+  **0.028 ± 0.002** (beats the point baseline's 0.033 — distributional modelling cost *nothing* on
+  accuracy); **cirrhosis recall 0.27 → 0.82 ± 0.10** at the q90 upper quantile (the tail the ensemble
+  couldn't catch, D19). **Honest caveat that survived the gate:** interval *calibration* is
+  seed-variable — precision 0.71 ± 0.26, coverage 0.70 ± 0.15 (seed 1 over-widened to 0.89 coverage but
+  0.35 precision; seed 0 under-covered at 0.54). Diagnosis (predicted *before* running, and confirmed):
+  the **memoryless per-step sampler under-commits** — independent per-step mode draws random-walk back
+  toward the middle instead of persisting a "fast-progressor" branch. So recall recovery is trustworthy;
+  interval *widths* are not yet — the fix is a **persistent latent** (sample susceptibility once per
+  trajectory) or explicit calibration. Note: the sampler draws a constraint-valid *mode*, never
+  `μ + σ·noise`, so no ratchet is ever violated when sampling (a naive Gaussian MDN would violate it).
+  My 1-seed read overstated precision/coverage; the multi-seed gate corrected it — exactly why the gate
+  exists. §8 upgraded from "sketch" to this measured result.
+- **Smooth constraint head — TRAINED, and it lost (`smooth_head_test.py`).** Tested the reviewer's
+  clamp-free parameterisation `next = prev + (fmax − prev)·sigmoid(raw)` (smooth gradients, same
+  monotone+bounded guarantee, no dead zone at the floor). Result: **0.039 vs the shipped 0.033** at
+  matched budget, with **0 violations** confirmed. The bounded-increment form saturates the increment
+  near the ceiling, costing expressiveness; the clamp's "dead gradient" never bites here (values stay
+  mid-range, as D22 documented). **Verdict: keep the softplus+clamp head.** A mathematically cleaner
+  idea that measurably loses — only knowable by running it.
+
+Lesson reinforced: verify recommendations by *building* them, not by agreeing. Two strong-reviewer
+ideas → one real gain (dist head), one measured rejection (smooth head), zero reflexive yeses.
+
+---
+
 ## D12. Boundary experiment — tried to EMPIRICALLY show JEPA winning; it did not (dead-end)
 
 **Motivation.** Memo §3/§8 *argue* the JEPA latent starts to pay once the stripped-out stochastic
