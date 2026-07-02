@@ -432,6 +432,36 @@ check committed-vs-working-tree, never confirm "clean" from a check it didn't ru
 
 ---
 
+## D25. TESTED the memo's persistent-latent hypothesis — half-confirmed, and sharper for it
+
+§8/D23 *predicted* the MDN's under-dispersed, seed-variable calibration (coverage 0.70 ± 0.15) would be
+fixed by a latent sampled ONCE per trajectory (a persistent "disease subtype") rather than the MDN's
+fresh mode every step. A named next-step is weaker than a measured one, so I built it (`latent_forecast.py`,
+branch `exp/persistent-latent`): a sequential VAE — a GRU infers `q(z | observed window)`, every step is
+conditioned on the SAME `z`, decoded through the shared by-construction `ConstraintHead`.
+
+**Two attempts (the first is a lesson):**
+1. Naive VAE **posterior-collapsed** — KL/dim → 0, `post_std` reverted to the prior (1.0), `z` ignored,
+   coverage 0.09, MAE 0.055. A collapsed VAE does NOT test the hypothesis (it's a degenerate model, not a
+   persistent latent). Reporting it as "persistent latent fails" would have been wrong.
+2. Added **free-bits** (0.5 nats/dim floor, so no dim is pushed to the prior) + a teacher-forced
+   stabiliser → `z` stays informative (KL/dim ≈ 0.4, `post_std` ≈ 0.5), MAE back to **0.032**.
+
+**3-seed result vs the memoryless MDN (D23):** coverage **0.74 ± 0.03** vs **0.70 ± 0.15** — the persistent
+latent is **~5× more stable** (the fix the memo predicted, but for calibration *stability*, not reaching
+nominal); recall 0.58 vs 0.82 (lower), precision 0.89 vs 0.71 (higher, steadier). **It does NOT reach the
+nominal 0.90.** Why (the real insight): a fixed-per-trajectory `z` captures **between-patient** subtype
+uncertainty but not **within-trajectory** flare noise (its rollout is deterministic given `z`); the
+memoryless MDN captures the second, not the first. **So they are complementary, not competing** — the
+calibrated head needs a persistent latent *for subtype* PLUS a per-step distributional term *for flare
+noise*. This is a sharper, evidence-backed statement than §8's original "a persistent latent would fix it."
+
+Lesson: when an experiment posterior-collapses (or otherwise degenerates), it has not tested your
+hypothesis — fix the pathology first, then read the result. And "half-confirmed with a mechanism" beats
+both "confirmed" (overclaim) and "failed" (the collapsed-run misread).
+
+---
+
 ## D12. Boundary experiment — tried to EMPIRICALLY show JEPA winning; it did not (dead-end)
 
 **Motivation.** Memo §3/§8 *argue* the JEPA latent starts to pay once the stripped-out stochastic

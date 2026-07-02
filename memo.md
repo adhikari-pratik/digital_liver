@@ -154,21 +154,22 @@ Using portal hypertension P crossing a threshold as the decompensation proxy
 ## 8. Residual risk and what I would do next
 
 - **Probabilistic forecasting (the biggest gap now) — and I built the fix, not just named it.** §6's
-  tail miss is structural: a point estimate regresses to the conservative middle. The cheap fix fails —
-  a **5-model deep ensemble** does *not* recover the tail (mean *worse* than one model; 90% intervals
-  cover only **28%** — `ensemble_forecast.py`) because the uncertainty is **aleatoric** (hidden
-  susceptibility is unidentified from a short history), not epistemic. So I trained the real fix — a
-  **mixture-density head** (`mdn_forecast.py`, `models/distributional_head.py`): K components each
-  decoded through the *same* `ConstraintHead`, so every sampled future is constraint-valid (the sampler
-  draws a valid *mode*, never Gaussian noise that could break a ratchet). Measured over 3 seeds it
-  recovers what the ensemble couldn't — **cirrhosis recall 0.27 → 0.82** at the upper quantile — at **no
-  accuracy cost** (0.028 vs 0.033). Honest caveat: interval *calibration* stays seed-variable (coverage
-  0.70 ± 0.15) — the memoryless per-step sampler under-commits to a persistent "fast-progressor" branch,
-  so a persistent latent (or explicit calibration) is the last step.
+  tail miss is structural (a point estimate regresses to the middle), and the cheap fix fails: a
+  **5-model deep ensemble** doesn't recover it (90% intervals cover **28%** — `ensemble_forecast.py`)
+  because the uncertainty is **aleatoric** (susceptibility unidentified from short history), not
+  epistemic. So I trained the fix — a **mixture-density head** (`mdn_forecast.py`): K components each
+  decoded through the *same* `ConstraintHead`, so every sampled future is constraint-valid (sampling a
+  valid *mode*, not raw noise that could break a ratchet). Measured over 3 seeds it recovers what the
+  ensemble couldn't — **cirrhosis recall 0.27 → 0.82** at the upper quantile — at **no accuracy cost**
+  (0.028 vs 0.033). Its interval *calibration* stays seed-variable (coverage 0.70 ± 0.15)
+  — the memoryless per-step sampler under-commits. I then *tested* the predicted fix
+  (`latent_forecast.py`, D25): a per-trajectory latent (sampled once, not per step) **stabilises
+  calibration 5×** (0.74 ± 0.03) but doesn't alone reach nominal — it captures *between-patient* subtype,
+  not *within-trajectory* flare noise, so a calibrated head needs both.
 - **Validate JEPA where it pays.** Re-attach the real modality substrate; once observations carry
   un-forecastable high-dimensional detail, the latent should overtake raw-space prediction — the
   direct test of §2, and TS-JEPA is **already built** for it. (A first attempt with *separable*
-  nuisance failed — the raw model ignored the noise dims; redesign uses *entangled* noise, D12.)
+  nuisance failed; redesign uses *entangled* noise, D12.)
 - **Causal, not correlational, reasons.** Mask information flow to the causal edges and validate
   counterfactuals against generator re-runs — attacking the §7 shortcut.
 
