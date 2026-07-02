@@ -112,11 +112,18 @@ def mean_rollout(model, X, ctx, ercp, K):
     return out.numpy()
 
 
-def run_seed(seed, Xv, cv, ev, Xn, verbose=True):
+def run_seed(seed, Xv, cv, ev, Xn, verbose=True, save_path=None):
     """Train one MDN, return (acc, rec_q90, prec_q90, rec_q95, prec_q95, coverage)."""
     if verbose:
         print(f"\n--- seed {seed} ---", flush=True)
     model = train(seed); model.eval()
+    if save_path:                       # persist this seed so eval_mdn.py can verify without training
+        import os
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
+        torch.save({"state_dict": model.state_dict(), "n_mix": NMIX, "hidden": HIDDEN,
+                    "couple_m": True, "seed": seed}, save_path)
+        if verbose:
+            print(f"  saved checkpoint -> {save_path}", flush=True)
     pred_mean = mean_rollout(model, Xv, cv, ev, K_OBS)
     acc = mae_over(pred_mean, Xn, K_OBS + 1, T, RATCHETS)
     Fsamp = mc_rollout(model, Xv, cv, ev, K_OBS, S_SAMP).numpy()
@@ -138,7 +145,10 @@ def main(seeds=(0, 1, 2)):
     print(f"training MDN (mixture) head, {len(seeds)} seeds...", flush=True)
     _, va = get_split()
     _, cv, ev, Xv = build_rollout_batch(va); Xn = Xv.numpy()
-    rows = np.array([run_seed(s, Xv, cv, ev, Xn) for s in seeds])
+    # save the FIRST seed's model so eval_mdn.py can verify the tail claim without retraining
+    rows = np.array([run_seed(s, Xv, cv, ev, Xn,
+                              save_path="checkpoints/mdn.pt" if i == 0 else None)
+                     for i, s in enumerate(seeds)])
     m, sd = rows.mean(0), rows.std(0)
     lbl = ["ratchet MAE", "q90 recall", "q90 prec", "q95 recall", "q95 prec", "90% coverage"]
     print(f"\n=== MDN distributional head, {len(seeds)} seeds (mean +/- sd) ===")

@@ -57,6 +57,7 @@ python make_training_curves.py # REAL train vs held-out learning curves per epoc
 python ensemble_forecast.py # probabilistic forecasting: deep ensemble tested & RULED OUT (tail is aleatoric, needs a distributional head)
 python mdn_forecast.py     # the §8 fix, TRAINED (3 seeds): mixture-density head recovers cirrhosis recall 0.27->0.82 at no accuracy cost (D23)
 python latent_forecast.py  # tests the persistent-latent hypothesis (seq-VAE, free-bits): stabilises calibration 5x but needs a per-step term too (D25)
+python eval_mdn.py         # FAST (~9s, no training): verify the MDN tail claim from checkpoints/mdn.pt (one seed; 3-seed aggregate in mdn_forecast.py)
 python smooth_head_test.py # tested Codex's clamp-free head: 0 violations but 0.039>0.033 -> clamp form kept (D23)
 python explain.py          # "why decompensation at month 30?" (baseline) -> figures/explain_decompensation.png
 python explain_jepa.py     # same audit, on the JEPA itself -> figures/explain_decompensation_jepa.png
@@ -75,6 +76,7 @@ python explain_jepa.py     # same audit, on the JEPA itself -> figures/explain_d
 | `models/distributional_head.py` | §8 fix: mixture head, each component constraint-valid (design); **trained & measured** in `mdn_forecast.py` |
 | `mdn_forecast.py` | trains the distributional head + MC rollout; 3-seed tail-recall/calibration result (D23) |
 | `latent_forecast.py` | persistent-latent sequential-VAE (free-bits); tests the §8 calibration hypothesis (D25) |
+| `eval_mdn.py` | fast MDN verification from `checkpoints/mdn.pt` (no training; one seed vs the 3-seed aggregate) |
 | `smooth_head_test.py` | tested a clamp-free constraint head — kept the shipped clamp form (D23) |
 | `ts_jepa.py` | **masked, action-conditioned TS-JEPA** — the team's direction, built & measured (D16) |
 | `models/history.py` | `HistoryStep` — baseline + GRU history latent `w` |

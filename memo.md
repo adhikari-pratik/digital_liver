@@ -16,15 +16,16 @@ engaging the brief's "accurate, on-manifold, *and* auditable" bar (zero-violatio
 |---|---|---|
 | constrained baseline **+ multistep, M←F·C coupled** | **0.033** (std ~0.001) | what I ship *here* |
 | masked **TS-JEPA** (the team's direction) | **0.039 ± 0.006** (5 seeds) | competitive, 0 violations |
+| **MDN distributional head** *(experimental)* | **0.028 ± 0.002** | fixes the tail: cirrhosis recall 0.27→**0.82**; calibration WIP (§8) |
 | GRU-JEPA, **dec-anchor fixed** | 0.12 | see §3 |
 | GRU-JEPA, naive (my first attempt) | 0.52 | a *bug*, not a limit (§3) |
 
 **On this deliberately clean toy the JEPA is viable and competitive but does not *beat* the
-constrained baseline — which is also more stable (std 0.001 vs 0.006) and simpler — so I ship the
-baseline here.** I commit to JEPA for the *real* Digital Liver, where §2's conditions hold, and I
-built the masked architecture so that recommendation is *demonstrated, not deferred*. One honest
-correction up front: my first read that JEPA carried a **fundamental** accuracy cost was wrong — it
-was a bug in my own wiring, found and fixed (§3): "ties, doesn't beat," not "costs."
+constrained baseline — also more stable (std 0.001 vs 0.006) and simpler — so I ship the baseline
+here.** I commit to JEPA for the *real* Digital Liver (§2's conditions) and built the masked
+architecture so that recommendation is *demonstrated, not deferred*. One honest correction: my first
+read that JEPA carried a **fundamental** accuracy cost was a bug in my own wiring, found and fixed
+(§3): "ties, doesn't beat," not "costs."
 
 ## 2. What a predictive latent buys — and precisely when it pays
 
@@ -102,8 +103,8 @@ model).
 **But zero violations ≠ on-manifold.** A learned manifold critic (`manifold_critic.py`, AUC 1.0
 rejecting valid-but-wrong transitions) scores the baseline rollout on-manifold (0.996 ≈ **real** 0.995,
 where *real* = genuine held-out generator transitions — the manifold itself) and **TS-JEPA at 0.963**
-(on-manifold too — just below real, far above GRU-JEPA; its faint gap mirrors its higher forecast
-error) but the **GRU-JEPA free-rollout at 0.726**. The drift is specific to *step-by-step re-encoding*
+(single-seed; on-manifold too — just below real, far above GRU-JEPA; its faint gap mirrors its higher
+forecast error) but the **GRU-JEPA free-rollout at 0.726**. The drift is specific to *step-by-step re-encoding*
 (errors compound through the encoder); the cumsum-from-anchor construction used by *both* baseline and
 TS-JEPA stays on-manifold. Constraints bound the box; the critic checks you are on the surface inside it.
 

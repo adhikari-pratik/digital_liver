@@ -462,6 +462,27 @@ both "confirmed" (overclaim) and "failed" (the collapsed-run misread).
 
 ---
 
+## D26. Verified a reviewer's "persistent latent" recommendation — already built (D25), outcome overclaimed
+
+A later review recommended, as "the unfinished business," exactly the CVAE/persistent-latent architecture
+(encoder → `q(z|x_{0:t})`, reparameterized draw ONCE at t=0, condition all K steps on the fixed `z`). That
+is precisely `latent_forecast.py` (D25) — already built, measured, and shipped. Recorded here because the
+review also asserted it would be "fixing your calibration and coverage metrics," which the measurement
+**contradicts**: a persistent `z` *stabilises* calibration (~5×) but does NOT reach nominal 0.90 and
+*lowers* tail recall (0.58 vs 0.82), because a fixed `z` can't model within-trajectory flare noise (D25).
+Taking the review at face value would have meant writing a claim my own data refutes. Verify, don't agree.
+
+Packaging wins from the same review (all valid, verified against code, done):
+- **TS-JEPA manifold 0.963 labelled single-seed** in memo §5 — it is one seed (`manifold_critic.py` trains
+  `seed=0`); the cumsum-from-anchor construction is structural, so low-variance, but one seed is one seed.
+- **Shipped `checkpoints/mdn.pt` + `eval_mdn.py`** (fast, ~9 s, no training, deterministic) so a reviewer can
+  verify the MDN tail claim instantly. Honest: it shows the SINGLE saved seed (recall@q90 0.75, coverage
+  0.55); the headline is the 3-seed aggregate (0.82 / 0.70), reproducible via `mdn_forecast.py`.
+- **Added the MDN as an experimental row in the memo §1 table** (0.028 MAE, recall 0.27→0.82, calibration WIP)
+  — surfaces the tail fix in the headline, clearly labelled experimental, not shipped.
+
+---
+
 ## D12. Boundary experiment — tried to EMPIRICALLY show JEPA winning; it did not (dead-end)
 
 **Motivation.** Memo §3/§8 *argue* the JEPA latent starts to pay once the stripped-out stochastic
