@@ -1,18 +1,18 @@
 """
-PROPOSED next-step design (memo §8) -- NOT trained, NOT wired into train*.py / eval.py. A concrete,
-runnable sketch of the distributional readout that would address the aleatoric tail miss (§6): the
-hidden susceptibility is unidentified from a short history, so the same input admits multiple futures.
-A point estimate regresses to the conservative middle and under-calls the cirrhosis/decompensation
-tail (measured: deep ensembles don't fix this -- D19).
+The distributional readout for the aleatoric tail (memo §8). The hidden susceptibility is unidentified
+from a short history, so the same input admits multiple futures; a point estimate regresses to the
+conservative middle and under-calls the cirrhosis/decompensation tail (deep ensembles don't fix this --
+D19).
 
-The fix: replace the point head with a MIXTURE over next-step increments, and decode EACH component
-through the existing by-construction `ConstraintHead`. So every mixture component -- and every sampled
+The fix: replace the point head with a MIXTURE over next-step states, decoding EACH component through
+the existing by-construction `ConstraintHead`. So every mixture component -- and every sampled
 trajectory -- is still constraint-valid (ratchets non-decreasing, S/ERCP gated, bounds hold). The
-uncertainty lives in the mixture; the hard guarantee is untouched. Train by mixture NLL (a CRPS /
-pinball quantile loss is the natural alternative).
+uncertainty lives in the mixture; the hard guarantee is untouched. `sample()` draws a constraint-valid
+MODE (never mu + sigma*noise, which could break a ratchet). Trained by mixture NLL.
 
-Kept illustrative on purpose (imports and runs, see __main__) but out of the trained pipeline, because
-it is future work, not a validated result -- ruthless scoping (D0).
+This module is the reusable head; it is TRAINED and MEASURED end-to-end in `mdn_forecast.py` (D23):
+3 seeds, cirrhosis recall 0.27 -> 0.82 at no accuracy cost, interval calibration still seed-variable.
+The __main__ below is a standalone smoke test (imports and runs, constraint-valid components).
 """
 import math
 import torch
