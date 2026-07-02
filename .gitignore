@@ -1,0 +1,16 @@
+# Python build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Working notes / external cross-check material (not part of the deliverable)
+gemini_say.txt
+
+# Reproduce scratch (regenerated on demand)
+_repro_backup/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+
+.claude
