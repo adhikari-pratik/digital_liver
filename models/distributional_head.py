@@ -15,9 +15,16 @@ This module is the reusable head; it is TRAINED and MEASURED end-to-end in `mdn_
 The __main__ below is a standalone smoke test (imports and runs, constraint-valid components).
 """
 import math
+import os
+import sys
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+
+# Allow BOTH `python -m models.distributional_head` and `python models/distributional_head.py`
+# (direct execution otherwise can't import the top-level `generator` module).
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from generator import N_FIELDS
 from models.constraints import ConstraintHead

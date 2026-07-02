@@ -12,7 +12,8 @@ Decision-relevant metrics beyond value-MAE -- the numbers a clinical team actual
      realistic at population scale" check -- on-theme for a world model.
   4. UNCERTAINTY (light, honest): prediction intervals from held-out residual quantiles + empirical
      coverage. NOTE: homoscedastic / first-order -- true per-input calibration needs a distributional
-     head or ensemble (named as next-step, not built).
+     head (built + measured in mdn_forecast.py, D23; ensemble ruled out in ensemble_forecast.py, D19)
+     -- neither is integrated into THIS shipped baseline checkpoint.
 
 Shipped baseline. Run: python clinical_metrics.py
 """
@@ -111,8 +112,8 @@ def main():
     print("  per-field 90% interval coverage on held-out (nominal 0.90):")
     for i in [F, P, M]:
         print(f"     {FIELD_NAMES[i]:5s} halfwidth={hw[i]:.3f}  coverage={cov[i]:.2f}")
-    print("  NOTE: homoscedastic first-order intervals; per-input calibration needs a "
-          "distributional head / ensemble (next step, not built).")
+    print("  NOTE: homoscedastic first-order intervals; per-input calibration needs a distributional "
+          "head -- built + measured in mdn_forecast.py (D23), not integrated into this shipped checkpoint.")
 
 
 if __name__ == "__main__":

@@ -118,7 +118,8 @@ So nothing ties `dec` to the space the invariance loss drags `zhat` into. As the
 succeeds, `zhat` lands in a region `dec` cannot read → accuracy craters *because* the latent
 prediction works. That is a wiring gap, not a law.
 
-**Test (`variant_c.py`, all else identical to `train_jepa.py`: 60 ep, seed 0, VICReg on, full inv):**
+**Test (`variant_c.py` — scratchpad, not shipped; the dec-anchor fix it verified lives in the shipped
+`train_jepa.py`; all else identical: 60 ep, seed 0, VICReg on, full inv):**
 
 | variant | ratchet MAE (K=24) | inv/var | latent-pred |
 |---|---|---|---|
@@ -173,8 +174,11 @@ observed state → ratchets provably non-decreasing; S = creep − ERCP relief; 
 D14 dec-anchor.
 
 **Result (5 seeds).** ratchet MAE (K=24) **mean 0.0407 ± 0.006** (min 0.031, max 0.049), **0
-violations** every seed. Competitive with the baseline (0.037) but not beating it, and higher
+violations** every seed. Competitive with the then-baseline (0.037) but not beating it, and higher
 variance (std 0.006 vs 0.001).
+> **Superseded by D20/D21 (what the memo/README ship):** the loss schedule (D21) lowers this to
+> **0.0387 ≈ 0.039 ± 0.006**, and the baseline gained M←F·C coupling (D20) → **0.033**. So the memo's
+> head-to-head is TS-JEPA **0.039** vs baseline **0.033**, not the 0.0407/0.037 first measured here.
 
 **OOD probe (added later, same cohorts as `eval.py`/`compare.py`).** TS-JEPA vs baseline ratchet MAE
 (K=24): held-out susceptibility **0.098 vs 0.110** (TS-JEPA slightly better — a modest hint the latent
@@ -274,8 +278,9 @@ M as gated by F·C but the *shipped* `baseline.pt` used `couple_m=False` (the co
 validated in `coupling.py`). Two ways to resolve: reword, or ship the coupled model. We measured
 before deciding.
 
-**Measurement (`test_couple.py`, same multistep recipe, seed 0).** couple_m=False → ratchet MAE
-(K=24) 0.0367, M-field MAE 0.0394. couple_m=True → **0.0325 / 0.0231** — better on both, still
+**Measurement (`test_couple.py` — scratchpad, not shipped; the shipped `coupling.py` reproduces the
+M-field halving and corr, and `eval.py` reproduces the 0.033 endpoint; same multistep recipe, seed 0).**
+couple_m=False → ratchet MAE (K=24) 0.0367, M-field MAE 0.0394. couple_m=True → **0.0325 / 0.0231** — better on both, still
 0-violation (the coupled M is monotone by construction). Improvement (~0.0042) is well outside the
 seed noise (baseline std ~0.001). So the coupled model is strictly better *and* makes §5 true → ship
 it (`train.py` COUPLE_M=True). Full regen: in-dist 0.037→0.033, held-out susc 0.110→0.099, unseen
@@ -394,7 +399,8 @@ ideas → one real gain (dist head), one measured rejection (smooth head), zero 
 
 **Motivation.** Memo §3/§8 *argue* the JEPA latent starts to pay once the stripped-out stochastic
 observation substrate is re-attached. We tried to turn that argument into a measurement
-(`boundary_jepa.py`): keep `x(t)` byte-for-byte identical, add an observation layer
+(`boundary_jepa.py` — scratchpad, not shipped; this substrate probe is future work per memo §8):
+keep `x(t)` byte-for-byte identical, add an observation layer
 `obs = [signal projection of x ; D_NOISE pure-nuisance dims of strength σ]`, and compare two
 capacity-matched models on recovering the **true clean** `x(t+1)` via a linear probe — one
 predicting in raw observation space (RAW), one predicting the latent (JEPA).

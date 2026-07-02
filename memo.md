@@ -24,7 +24,7 @@ constrained baseline — which is also more stable (std 0.001 vs 0.006) and simp
 baseline here.** I commit to JEPA for the *real* Digital Liver, where §2's conditions hold, and I
 built the masked architecture so that recommendation is *demonstrated, not deferred*. One honest
 correction up front: my first read that JEPA carried a **fundamental** accuracy cost was wrong — it
-was a bug in my own wiring, found and fixed (§3). The verdict is "ties, doesn't beat," not "costs."
+was a bug in my own wiring, found and fixed (§3): "ties, doesn't beat," not "costs."
 
 ## 2. What a predictive latent buys — and precisely when it pays
 
@@ -33,8 +33,8 @@ large **stochastic/nuisance substrate** (imaging speckle, sensor noise) a raw lo
 capacity chasing — JEPA's headline advantage; (2) the dynamics' natural coordinates **are not the
 raw channels**; (3) there is **hidden state** to infer and carry; or (4) raw targets are
 high-dimensional/multimodal. The brief points squarely at (1): the real pipeline "has its own
-stochastic substrate on top of `x(t)`," stripped out here — why the team's direction is sound for real
-data, and why *this* clean exercise is the one place it doesn't yet pay.
+stochastic substrate on top of `x(t)`," stripped out here — sound for real data, but *this* clean
+exercise is the one place it doesn't yet pay.
 
 ## 3. Did the JEPA objective cost accuracy? I measured it — and found my own bug
 
@@ -88,8 +88,10 @@ latent worth its cost here.
 ## 5. Constraints on-manifold, and what they cost
 
 The one-directional fields are enforced **by construction**: the head parameterises F, D, P, M as
-`prev + softplus(·)` (a decrease is *unrepresentable*), A/C/flare as bounded `sigmoid(·)`, and S as a
-monotone creep minus an ERCP-gated relief (resolving a spec contradiction on S's direction — D1).
+`prev + softplus(·)`, clamped to bounds (a decrease is *unrepresentable*; the clamp's only wart — a
+dead gradient at the floor — never bites here, and a smooth clamp-free variant measured *worse*, D23),
+A/C/flare as bounded `sigmoid(·)`, and S as a monotone creep minus an ERCP-gated relief (resolving a
+spec contradiction on S's direction — D1).
 Result: **exactly zero violations** across every model and rollout — a property of the
 parameterisation, not the loss. And the model *uses* the action exception, not just permits it: at
 ERCP events in a free rollout it predicts the S step-down **149/149** times (ΔS −0.173 vs true −0.174)
@@ -97,8 +99,8 @@ while creeping up otherwise (`probe_metrics.py`) — the mechanic is learned. Th
 names I rejected: a *loss penalty* (only discourages) and *projection* (guarantee lives *outside* the
 model).
 
-**But zero violations ≠ on-manifold.** A learned manifold critic (`manifold_critic.py`, AUC 1.0 at
-rejecting constraint-valid-but-wrong transitions) scores the baseline rollout on-manifold (0.996 ≈
+**But zero violations ≠ on-manifold.** A learned manifold critic (`manifold_critic.py`, AUC 1.0
+rejecting valid-but-wrong transitions) scores the baseline rollout on-manifold (0.996 ≈
 real 0.995) but the **GRU-JEPA free-rollout at 0.726**, despite its own 0-violation rate. The drift
 is specific to *step-by-step re-encoding* (errors compound through the encoder); the
 cumsum-from-last-observed-state construction used by *both* the baseline and TS-JEPA stays on the
@@ -117,7 +119,7 @@ treatment→A/C) are soft/bidirectional and don't admit a clean form — the hon
 - **Accuracy vs the noise floor, and not a flatline.** Error is reported beside the irreducible error
   (spread of independent generator re-runs): the fast channels A/C/flare sit *at* the floor; only the
   ratchets have reducible error. And the ratchet number isn't a flatline artifact — the model beats
-  persist-last **2.6×** and predict-mean **4×** on the ratchets (`probe_metrics.py`).
+  persist-last **~3×** (0.033 vs 0.096) and predict-mean **~4.6×** on the ratchets (`probe_metrics.py`).
 - **Generalisation probe (out-of-distribution).** Baseline ratchet MAE at K=24 (in-dist **0.033**):
   held-out susceptibility → **0.099 (3×)**; unseen late treatment → **0.031** (unchanged — generalises
   over the *observed* lever); beyond horizon → **0.100 (3×)**. Generalises over the observable, fails
@@ -126,7 +128,7 @@ treatment→A/C) are soft/bidirectional and don't admit a clean form — the hon
   ties on treatment, but its learned absolute positions **cap it at the trained horizon** — a split,
   the recurrent baseline more capable on horizon (`ts_jepa.py`).
 - **Clinical, decision-grade readouts (`clinical_metrics.py`).** Cirrhosis risk *ranking* is strong
-  (**AUC 0.927**; predicted-F bins stratify cleanly: F_pred 0.6–0.8 → 52% truly cirrhotic). But
+  (**AUC 0.927**; predicted-F bins stratify cleanly: F_pred 0.6–0.8 → 63% truly cirrhotic). But
   thresholded event detection exposes a real failure: **decompensation recall 0.27** (median +14
   months late), **cirrhosis-onset recall 0/20** — the point estimate under-shoots the tail. A
   **point-estimate limit** that aggregate MAE hid, and the strongest argument for §8's distributional

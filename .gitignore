@@ -5,9 +5,11 @@ __pycache__/
 
 # Working notes / external cross-check material (not part of the deliverable)
 gemini_say.txt
+AUDIT_REPORT.md
 
 # Reproduce scratch (regenerated on demand)
 _repro_backup/
+training_curves_*.npz
 
 # OS / editor cruft
 .DS_Store

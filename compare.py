@@ -1,9 +1,12 @@
 """
-Head-to-head: baseline (x-as-latent, memoryless)  vs  JEPA (latent-space, dead-end)  vs
-baseline+w (native-space + GRU history latent).
+Head-to-head: baseline (x-as-latent, memoryless)  vs  GRU-JEPA (latent-space, the naive
+first attempt / dead-end, checkpoints/jepa.pt)  vs  baseline+w (native-space + GRU history latent).
+
+NOTE: the "GRU-JEPA" column here is the minimal GRU predictor, NOT the masked TS-JEPA that the
+memo reports at ~0.039. TS-JEPA trains and evaluates in-process (no checkpoint) -- run ts_jepa.py
+for those numbers. Keeping them separate avoids conflating the dead-end GRU with the team's direction.
 
 Same eval as eval.py, run for all three models on identical held-out patients and probes.
-This is the table the memo's calls rest on.
 """
 
 import numpy as np
@@ -22,7 +25,7 @@ def load_all():
     b.load_state_dict(_bk["state_dict"]); b.eval()
     j = JEPA(); j.load_state_dict(torch.load("checkpoints/jepa.pt")["state_dict"]); j.eval()
     h = HistoryStep(); h.load_state_dict(torch.load("checkpoints/history.pt")["state_dict"]); h.eval()
-    return {"baseline": b, "JEPA": j, "baseline+w": h}
+    return {"baseline": b, "GRU-JEPA": j, "baseline+w": h}
 
 
 def roll(model, name, X, ctx, erc, K):
