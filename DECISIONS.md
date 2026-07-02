@@ -395,6 +395,43 @@ ideas → one real gain (dist head), one measured rejection (smooth head), zero 
 
 ---
 
+## D24. MEASURED TS-JEPA's on-manifold score (was asserted); + a batch of claim-vs-code fixes
+
+A consistency audit (a private, project-local `liver-auditor` subagent + external Codex passes) found
+the memo *claimed* TS-JEPA is on-manifold but `manifold_critic.py` only actually scored the baseline
+and GRU-JEPA — the claim was argued from the cumsum-from-anchor construction, not measured. The brief
+weights honest evaluation over polish, and "on-manifold" is one of its three explicit bars, so an
+asserted-not-measured claim is exactly the kind of soft spot to close.
+
+**Fix = measure it, don't soften it.** Added `return_model` to `ts_jepa.train()` (default off, callers
+unchanged), then in `manifold_critic.py` trained a TS-JEPA (seed 0), rolled it out on the SAME val
+patients, and scored it with the SAME critic. **Result:** real (genuine held-out generator transitions)
+**0.995**, baseline **0.996** (indistinguishable from real → on-manifold), **TS-JEPA 0.963** (on-manifold
+— just below real, far above GRU-JEPA), GRU-JEPA **0.726** (off-manifold despite 0 violations). So the
+claim holds, with honest nuance: TS-JEPA is on-manifold but marginally less pristine than the baseline,
+and that faint 0.03 gap mirrors its slightly higher forecast error (0.039 vs 0.033) — the "a bit noisier"
+story showing up in a second, independent metric. Memo §5 now cites the measured numbers and glosses
+"real" = genuine held-out generator transitions (the manifold itself), per the brief's "manifold of
+valid states" framing.
+
+Also in this batch (all found by the audit loop, verified against code before fixing):
+- `clinical_metrics.py` stale "distributional head (next step, not built)" → "built + measured
+  (mdn_forecast.py, D23), not integrated into this shipped checkpoint."
+- `compare.py` column "JEPA" (loads the GRU-JEPA checkpoint) → relabelled "GRU-JEPA"; docstring points
+  to `ts_jepa.py` for the masked-TS-JEPA numbers, so it isn't conflated with the memo's headline.
+- `models/distributional_head.py` "standalone smoke test" crashed on direct execution → added a
+  sys.path bootstrap so both `python -m …` and `python models/…py` run.
+- memo §6 numbers reconciled to live output: cirrhosis bin 52%→63%; flatline multiples 2.6×/4×→~3×/~4.6×.
+- D16 headline (0.0407/baseline 0.037) reconciled to the shipped scheduled 0.039 (D21) / coupled 0.033
+  (D20); scratchpad-only scripts (`test_couple.py`, `variant_c.py`, `boundary_jepa.py`) marked not-shipped.
+- Non-deliverable clutter (`AUDIT*.md`, `training_curves_*.npz`) gitignored, kept local.
+
+Lesson: "compiles + reproduces" is not "claims match code." The audit loop caught a class of defect my
+own green-checkmarks missed; the local auditor now encodes it (run the scripts, diff output vs prose,
+check committed-vs-working-tree, never confirm "clean" from a check it didn't run).
+
+---
+
 ## D12. Boundary experiment — tried to EMPIRICALLY show JEPA winning; it did not (dead-end)
 
 **Motivation.** Memo §3/§8 *argue* the JEPA latent starts to pay once the stripped-out stochastic

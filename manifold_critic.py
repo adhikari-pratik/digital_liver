@@ -124,10 +124,29 @@ def main():
             return float(torch.sigmoid(critic(torch.tensor(a), torch.tensor(b), torch.tensor(c))).mean())
 
     sb, sj, sr = mean_score(roll_b), mean_score(roll_j), float(s_real.mean())
+
+    # --- TS-JEPA: MEASURE its on-manifold score instead of asserting it (memo §5) ------------
+    # TS-JEPA has no checkpoint (trains in-process); its cumsum-from-anchor decode is claimed
+    # on-manifold by construction (no step-by-step re-encoding, unlike the GRU-JEPA above).
+    # Train one seed, roll it out on the SAME val patients, score with the SAME critic.
+    st = None
+    try:
+        import ts_jepa as tj
+        print("\n  training a TS-JEPA (seed 0) to score it directly (no checkpoint exists)...", flush=True)
+        *_, mt = tj.train(seed=0, return_model=True)
+        with torch.no_grad():
+            roll_t = tj.decode_forecast(
+                mt.dec, mt.enc(Xv, cv, tj.obs_mask(Xv.shape[0], tj.K_EVAL)), Xv, ev, tj.K_EVAL).numpy()
+        st = mean_score(roll_t)
+    except Exception as e:                                    # never let this sink the core result
+        print(f"  (TS-JEPA scoring skipped: {e})")
+
     print("\non-manifold score of free-rollout transitions (1=on-manifold, all models 0 violations):")
     print(f"  real held-out ...... {sr:.3f}")
     print(f"  baseline rollout ... {sb:.3f}   (near real -> on-manifold)")
-    print(f"  JEPA rollout ....... {sj:.3f}   (far below -> OFF-manifold despite 0 violations)")
+    if st is not None:
+        print(f"  TS-JEPA rollout .... {st:.3f}   (cumsum-from-anchor -> on-manifold, MEASURED not asserted)")
+    print(f"  GRU-JEPA rollout ... {sj:.3f}   (far below -> OFF-manifold despite 0 violations)")
     print("  => constraint-satisfaction != on-manifold; the critic catches drift the violation-rate can't.")
 
     # --- figure ---------------------------------------------------------------------------

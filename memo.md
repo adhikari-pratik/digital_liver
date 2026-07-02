@@ -88,10 +88,10 @@ latent worth its cost here.
 ## 5. Constraints on-manifold, and what they cost
 
 The one-directional fields are enforced **by construction**: the head parameterises F, D, P, M as
-`prev + softplus(·)`, clamped to bounds (a decrease is *unrepresentable*; the clamp's only wart — a
-dead gradient at the floor — never bites here, and a smooth clamp-free variant measured *worse*, D23),
-A/C/flare as bounded `sigmoid(·)`, and S as a monotone creep minus an ERCP-gated relief (resolving a
-spec contradiction on S's direction — D1).
+`prev + softplus(·)`, clamped to bounds (a decrease is *unrepresentable*; the clamp's dead-gradient-at-
+floor wart never bites here — a smooth clamp-free variant measured *worse*, D23), A/C/flare as bounded
+`sigmoid(·)`, and S as a monotone creep minus an ERCP-gated relief (resolving a spec contradiction on
+S's direction — D1).
 Result: **exactly zero violations** across every model and rollout — a property of the
 parameterisation, not the loss. And the model *uses* the action exception, not just permits it: at
 ERCP events in a free rollout it predicts the S step-down **149/149** times (ΔS −0.173 vs true −0.174)
@@ -100,11 +100,12 @@ names I rejected: a *loss penalty* (only discourages) and *projection* (guarante
 model).
 
 **But zero violations ≠ on-manifold.** A learned manifold critic (`manifold_critic.py`, AUC 1.0
-rejecting valid-but-wrong transitions) scores the baseline rollout on-manifold (0.996 ≈
-real 0.995) but the **GRU-JEPA free-rollout at 0.726**, despite its own 0-violation rate. The drift
-is specific to *step-by-step re-encoding* (errors compound through the encoder); the
-cumsum-from-last-observed-state construction used by *both* the baseline and TS-JEPA stays on the
-manifold. Constraints bound the box; the critic checks you are on the surface inside it.
+rejecting valid-but-wrong transitions) scores the baseline rollout on-manifold (0.996 ≈ **real** 0.995,
+where *real* = genuine held-out generator transitions — the manifold itself) and **TS-JEPA at 0.963**
+(on-manifold too — just below real, far above GRU-JEPA; its faint gap mirrors its higher forecast
+error) but the **GRU-JEPA free-rollout at 0.726**. The drift is specific to *step-by-step re-encoding*
+(errors compound through the encoder); the cumsum-from-anchor construction used by *both* baseline and
+TS-JEPA stays on-manifold. Constraints bound the box; the critic checks you are on the surface inside it.
 
 **Engaging the coupling (the interesting part), and it ships.** Per-field monotonicity is easy; I also
 structured the hardest coupling into the shipped head — **M as a hazard of sustained F·C**: M's
@@ -172,8 +173,8 @@ Using portal hypertension P crossing a threshold as the decompensation proxy
   counterfactuals against generator re-runs — attacking the §7 shortcut.
 
 **Bottom line:** I engaged JEPA for real — a minimal GRU-JEPA and the team's masked TS-JEPA — made
-both constraint-valid and auditable (TS-JEPA and baseline on-manifold by construction; the naive GRU
-drifts, §5), and *measured* that TS-JEPA is competitive with but not beaten by the constrained baseline
+both constraint-valid and auditable (critic-measured on-manifold; the naive GRU drifts, §5), and
+*measured* that TS-JEPA is competitive with but not beaten by the baseline
 on this clean toy that strips its advantage. So I ship the simpler baseline here and commit to JEPA for
 the real problem — and my earlier "fundamental cost" claim was a bug in my own code, found, fixed, and
 reported rather than buried.

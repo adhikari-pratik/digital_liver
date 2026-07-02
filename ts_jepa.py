@@ -101,7 +101,7 @@ def eval_ratchet(m, batch):
     return mae_over(xh, X.numpy(), K_EVAL + 1, H, RATCHETS)
 
 
-def train(seed=0, probe_batches=None):
+def train(seed=0, probe_batches=None, return_model=False):
     torch.manual_seed(seed); rng = np.random.default_rng(seed)
     tr, va = get_split()
     _, ctx, erc, X = build_rollout_batch(tr)
@@ -152,7 +152,8 @@ def train(seed=0, probe_batches=None):
     d = np.diff(xh[:, K_EVAL:], axis=1)
     viol = sum(int((d[:, :, i] < -1e-6).sum()) for i in RATCHET_UP)
     ood = {name: eval_ratchet(m, b) for name, b in (probe_batches or {}).items()}
-    return mae_over(xh, Xv.numpy(), K_EVAL + 1, T, RATCHETS), viol, ood
+    result = mae_over(xh, Xv.numpy(), K_EVAL + 1, T, RATCHETS), viol, ood
+    return (result + (m,)) if return_model else result
 
 
 # baseline (coupled, D20) OOD ratchet MAE (K=24) from eval.py, for side-by-side context
