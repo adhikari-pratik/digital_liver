@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# uv / virtualenv (env is machine-specific; uv.lock is committed for reproducibility)
+.venv/
+
 # Working notes / external cross-check material (not part of the deliverable)
 gemini_say.txt
 AUDIT*.md

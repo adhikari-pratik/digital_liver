@@ -1,0 +1,15 @@
+[project]
+name = "digital-liver"
+version = "0.1.0"
+description = "Digital Liver world-model take-home: a monotone-by-construction baseline vs a masked, action-conditioned TS-JEPA, compared by measurement."
+readme = "README.md"
+# Pin 3.12 rather than a bleeding-edge interpreter: stable PyTorch CPU wheels, fully reproducible.
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "numpy>=1.26",
+    "torch>=2.2",
+    "matplotlib>=3.8",
+]
+
+# Graphviz's `dot` CLI (used only to re-render figures/arch_*.png) is a system tool, not a Python
+# package — install it separately if you want to regenerate the architecture diagrams.

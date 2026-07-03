@@ -48,6 +48,20 @@ pip install torch numpy matplotlib
 ```
 CPU is fine (models are ~15k params). All scripts are deterministic (fixed seeds).
 
+## Setup (reproducible env with `uv`)
+
+Three dependencies only — `numpy`, `torch`, `matplotlib` (Graphviz's `dot` CLI is needed *only* to
+re-render the `figures/arch_*.png` diagrams). Build an isolated, pinned environment:
+
+```bash
+uv sync                              # creates .venv + installs pinned deps (fetches Python 3.12 if needed)
+uv run python test_invariants.py     # run any script inside that env
+```
+
+`pyproject.toml` pins **Python 3.12** (not a bleeding-edge interpreter) for stable PyTorch CPU wheels;
+CPU-only torch is sufficient. Prefer `uv sync` over a global install so the numbers reproduce against a
+known dependency set.
+
 ## Run
 
 > **Runtimes (CPU).** Scripts that only load a checkpoint run in **seconds** (`eval.py`, `compare.py`,
