@@ -101,7 +101,12 @@ def eval_ratchet(m, batch):
     return mae_over(xh, X.numpy(), K_EVAL + 1, H, RATCHETS)
 
 
-def train(seed=0, probe_batches=None, return_model=False):
+def train(seed=0, probe_batches=None, return_model=False, noise_std=0.0, drop_p=0.0, kmin=8):
+    """noise_std/drop_p/kmin are AUGMENTATION knobs (default off -> identical to the shipped recipe):
+    noise_std = Gaussian sensor noise on the online (masked) view -> encoder learns to DENOISE;
+    drop_p    = random dropout of observed history months -> encoder learns to BRIDGE gaps;
+    kmin      = lower bound on the observed-window cutoff K (lower -> trains shorter/staler histories).
+    The EMA target always sees the CLEAN, full sequence, so the objective pulls noisy/sparse -> clean."""
     torch.manual_seed(seed); rng = np.random.default_rng(seed)
     tr, va = get_split()
     _, ctx, erc, X = build_rollout_batch(tr)
@@ -126,12 +131,20 @@ def train(seed=0, probe_batches=None, return_model=False):
             if len(b) < PBATCH:
                 continue
             Xb, cb, eb = X[b], ctx[b], erc[b]
-            K = int(rng.integers(8, 41))
-            zo = m.enc(Xb, cb, obs_mask(PBATCH, K))              # online (masked-future)
+            K = int(rng.integers(kmin, 41))
+            mask = obs_mask(PBATCH, K)
+            if drop_p > 0.0:                                     # scattered gaps in the observed history
+                holes = (torch.rand(PBATCH, T) < drop_p) & mask
+                holes[:, K] = False                             # keep the last observed month as anchor
+                mask = mask & ~holes
+            Xin = Xb
+            if noise_std > 0.0:                                  # sensor noise on the ONLINE view only
+                Xin = torch.minimum((Xb + noise_std * torch.randn_like(Xb)).clamp(min=0.0), FMAX)
+            zo = m.enc(Xin, cb, mask)                            # online (masked-future, maybe corrupted)
             with torch.no_grad():
-                zt = tgt(Xb, cb, allobs)                         # EMA target (full)
-            xhat = decode_forecast(m.dec, zo, Xb, eb, K)
-            xhat_a = decode_forecast(m.dec, zt.detach(), Xb, eb, K)   # dec-anchor
+                zt = tgt(Xb, cb, allobs)                         # EMA target: CLEAN, full sequence
+            xhat = decode_forecast(m.dec, zo, Xin, eb, K)        # anchor at the (noisy) online view
+            xhat_a = decode_forecast(m.dec, zt.detach(), Xb, eb, K)   # dec-anchor (clean target path)
             zf = zo[:, K + 1:].reshape(-1, D)
             loss = (w_rec * Fn.mse_loss(xhat[:, K + 1:], Xb[:, K + 1:])       # rec: online value forecast
                     + w_rec * Fn.mse_loss(xhat_a[:, K + 1:], Xb[:, K + 1:])   # rec: dec-anchor (target path)

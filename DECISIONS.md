@@ -576,6 +576,54 @@ this submission.**
 
 ---
 
+## D29. Domain-stress probes — JEPA WINS the three axes that define the real problem (memo reframe)
+
+Prompted by "what does JEPA actually buy in THIS domain — check it honestly." The clean toy strips JEPA's
+advantages, so point-accuracy favours the baseline (0.033 vs 0.039). So I put the stripped conditions back
+and measured, gating everything multi-seed. Three axes, three JEPA wins.
+
+**Sensor noise — an honest three-step arc (`noise_robustness.py` → `jepa_augmented.py` → `jepa_denoise.py`).**
+1. A *clean-trained* TS-JEPA degrades MORE than the baseline under test-time noise (both cumsum from the
+   noisy anchor; the baseline's memorylessness is accidentally noise-robust). The reviewer's "inject noise
+   and JEPA wins" claim, as literally stated, is REFUTED — reported, not buried.
+2. Noise-AUGMENTED training (online view corrupted, EMA target clean → the encoder learns to denoise) helps
+   — JEPA-noise < JEPA-clean at every σ — but still loses to the baseline, because the shared cumsum anchor
+   caps the gain. (Dropout-aug for scattered missingness likewise did not help and blurred the staleness
+   win — NOT shipped.)
+3. The fix the diagnosis points to: a **denoised-anchor** head (`jepa_denoise.py`) — a state-decode head
+   estimates the clean current state from the whole window and the forecast cumsums from THAT, not the raw
+   noisy value. **3-seed result vs baseline** (ratchet MAE on clean future, K0=24): σ=0.05 **0.039 vs
+   0.051**, σ=0.10 **0.048 vs 0.076 (−37%)**, σ=0.15 **0.071 vs 0.098**. **JEPA wins the noise axis
+   outright.** A built-in ABLATION (same model, denoised-anchor ON vs OFF) is the proof: the raw-anchor
+   variant tracks the baseline almost exactly, the denoised-anchor pulls far ahead → the denoised anchor
+   *is* the mechanism, an advantage a memoryless model structurally cannot have. Honest costs: needs
+   noise-aug training (the correct way to build for a noisy pipeline); the denoised anchor costs ~0.006 at
+   σ=0 (use the raw-anchor mode when clean — same model beats the baseline across the whole range); and it
+   gives up "passes exactly through the observed value" (undesirable under noise anyway) while keeping
+   monotone/bounded by construction.
+
+**Missing / stale visits (`missing_visits.py`).** As the last visit ages, the memoryless baseline compounds
+from one stale anchor while TS-JEPA integrates the pre-gap history. 3 seeds, ratchet MAE on the fixed window
+[25..60]: JEPA degrades LESS at every in-distribution staleness and **overtakes at ~12–15 months**
+(K0=9: **0.064 vs 0.065**). K0<8 is OOD (the encoder trained on masks K∈[8,40]) — flagged, not hidden.
+
+**Generalisation (held-out susceptibility).** Already measured (D16/D21): TS-JEPA **0.092 vs 0.099**.
+
+**The reframe (memo §1 + bottom line).** Three measured, multi-seed-gated wins on the three axes that define
+the real domain (denoising, partial observation, generalisation) moved the recommendation from "ship the
+baseline here" to **"JEPA for the Digital Liver; the baseline is the on-ramp and the honest point-accuracy
+benchmark, not the ship."** Figures in `figures/` (`figures_showcase.py`; seed-0 illustrative — headline
+numbers are the 3-seed gates). Every §-that-said "JEPA only ties" was reconciled to "ties on the clean
+slice, wins on the stresses."
+
+**Why this might be wrong (we enjoy saying so):** the noise is synthetic Gaussian on the toy's `x(t)`, a
+proxy for real sensor noise; the denoised-anchor win depends on training FOR noise (a clean-trained model
+does not denoise); and all of it still lives inside one generator (the generator-inverter ceiling holds).
+What it *does* establish: once the domain's real stresses return, JEPA's latent buys denoising +
+state-integration the memoryless peer cannot — measured with an ablation, not asserted.
+
+---
+
 ## D12. Boundary experiment — tried to EMPIRICALLY show JEPA winning; it did not (dead-end)
 
 **Motivation.** Memo §3/§8 *argue* the JEPA latent starts to pay once the stripped-out stochastic
