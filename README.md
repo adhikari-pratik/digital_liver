@@ -7,6 +7,17 @@ evaluation designed to falsify the model.
 **Read `memo.md` first** (the 3-page decision memo — the primary deliverable). `DECISIONS.md` is
 the full reasoning trail including dead-ends — and one bug I found in my own JEPA (D14).
 
+## Deliverables (assignment map)
+
+| the assignment asks for | where it is in this repo |
+|---|---|
+| **Decision memo** (≤3 pages, primary) | `memo.md` — also `memo.tex` → compile to `memo.pdf` |
+| **Working prototype** (learns from trajectories, predicts future states, applies a constraint mechanism) | **delivered prototype:** `models/baseline.py` + `checkpoints/baseline.pt` (constrained next-state predictor); **recommended architecture:** `ts_jepa.py` (masked TS-JEPA). Both apply the by-construction head `models/constraints.py` |
+| **Evaluation harness** (held-out accuracy, constraint-violation rate, generalisation probe — failures shown) | `eval.py` (the core harness) + `probe_metrics.py`, `clinical_metrics.py`, `verify_claims.py`, `missing_visits.py`, `jepa_denoise.py` |
+| explainability — "why decompensation at month 30?" | memo §7 + `explain.py` → `figures/explain_decompensation.png` |
+| generator (data + quality bar) | `generator.py` (seeded; self-checks constraints hold in the data) |
+| optional extras (seeds, not required) | manifold critic (`manifold_critic.py`), distributional head (`mdn_forecast.py`, `latent_forecast.py`), denoised-anchor JEPA (`jepa_denoise.py`), architecture diagrams (`figures/arch_*.png`) |
+
 ## TL;DR result
 
 **On the clean toy** (head-to-head, free rollout, ratchet MAE at K=24; all models **0 constraint violations**):
@@ -18,30 +29,31 @@ the full reasoning trail including dead-ends — and one bug I found in my own J
 | GRU-JEPA, dec-anchor fixed (D14) | 0.12 |
 | GRU-JEPA, naive first attempt | 0.52 (a *bug*, not a limit) |
 
-**But the toy deliberately strips JEPA's advantages.** Put the real domain's stresses back and **JEPA wins
-the three axes that define it** (baseline vs TS-JEPA, ratchet MAE; multi-seed gated; figures in `figures/`):
+**But the toy deliberately strips JEPA's advantages.** Put the real domain's stresses back: on the axis that
+dominates real sensor data — noise — **JEPA wins decisively (outside seed noise)**; on the other two it
+draws level or edges ahead (baseline vs TS-JEPA, ratchet MAE; multi-seed gated; figures in `figures/`):
 
 | axis (the real domain) | baseline | TS-JEPA |
 |---|---|---|
 | clean, fresh, fully-observed | **0.033** | 0.039 |
-| sensor noise σ=0.10 — *denoising* | 0.076 | **0.048** (−37%, ablation-proven) |
-| stale last visit ~15 mo — *partial obs.* | 0.065 | **0.064** |
-| held-out susceptibility — *generalise* | 0.099 | **0.092** |
+| sensor noise σ=0.10 — *denoising* | 0.076 | **0.048** (−37%, outside seed noise, ablation-proven) |
+| stale last visit ~15 mo — *partial obs.* | 0.065 | 0.064 (≈ tie — within seed noise) |
+| held-out susceptibility — *generalise* | 0.099 | 0.092 (modest edge, single-config) |
 
 - **Recommendation: TS-JEPA for the Digital Liver world-model** (D29). It is accurate, on-manifold
-  (critic 0.963), and auditable, and it measurably wins **denoising, partial observation, and
-  generalisation** — the properties of real clinical data. The baseline wins only the sanitised
-  clean-slice point-accuracy (and even that is partly borrowed structure it cannot scale to the real
-  modalities). **The delivered prototype here is the coupled baseline** (checkpointed `baseline.pt`, best
-  on clean 8-D, the constraint showcase); **TS-JEPA is the architecture recommendation for the real
-  noisy/sparse/high-dim pipeline** — measured, not asserted.
+  (critic 0.963), and auditable; it **wins the noise axis decisively** (−37%, ablation-proven) and draws
+  level-or-ahead on partial observation and generalisation — the properties of real clinical data — while
+  the baseline wins only the sanitised clean-slice point-accuracy (and even that is partly borrowed
+  structure it cannot scale to the real modalities). **The delivered prototype here is the coupled
+  baseline** (checkpointed `baseline.pt`, best on clean 8-D, the constraint showcase); **TS-JEPA is the
+  architecture recommendation for the real noisy/sparse/high-dim pipeline** — measured, not asserted.
 - **Honest correction:** my first read was that JEPA carried a *fundamental* accuracy cost
   (`jepa_sweep.py`). That was a decoder/target-space wiring bug, found and fixed (D14) — the gap was
   0.52→0.12, and a proper masked TS-JEPA reached ~0.04. `jepa_sweep.py` is kept as the record of the
   mistaken conclusion and how it was caught, not as a live claim.
 - **Constraint-violation rate = 0.000000** (0 / 58,799 steps) — a property of the parameterisation.
 
-## Setup
+## Setup (quick)
 
 ```
 pip install torch numpy matplotlib
