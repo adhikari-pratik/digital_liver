@@ -11,8 +11,8 @@ the full reasoning trail including dead-ends, and one bug I found in my own JEPA
 
 | the assignment asks for | where it is in this repo |
 |---|---|
-| **Decision memo** (<=3 pages, primary) | `memo.md`, also `memo.tex` -> compile to `memo.pdf` |
-| **Working prototype** (learns from trajectories, predicts future states, applies a constraint mechanism) | **delivered prototype:** `models/baseline.py` + `checkpoints/baseline.pt` (constrained next-state predictor); **recommended architecture:** `ts_jepa.py` (masked TS-JEPA). Both apply the by-construction head `models/constraints.py` |
+| **Decision memo** (<=3 pages, primary) | `digital_liver_memo.pdf` (the deliverable); source in `memo.md` / `memo.tex` |
+| **Working prototype** (learns from trajectories, predicts future states, applies a constraint mechanism) | **delivered prototype:** `models/baseline.py` + `checkpoints/baseline.pt` (constrained next-state predictor); **recommended architecture:** `ts_jepa.py` (masked Time-Series JEPA, TS-JEPA). Both apply the by-construction head `models/constraints.py` |
 | **Evaluation harness** (held-out accuracy, constraint-violation rate, generalisation probe, failures shown) | `eval.py` (the core harness) + `probe_metrics.py`, `clinical_metrics.py`, `verify_claims.py`, `missing_visits.py`, `jepa_denoise.py` |
 | explainability, "why decompensation at month 30?" | memo Sec. 7 + `explain.py` -> `figures/explain_decompensation.png` |
 | generator (data + quality bar) | `generator.py` (seeded; self-checks constraints hold in the data) |

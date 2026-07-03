@@ -7,7 +7,7 @@ reproduce from fixed seeds (see `README.md`); the full decision trail (dead-ends
 ## 1. Recommendation
 
 I built the team's recommended JEPA, first a minimal GRU-JEPA, then a proper **masked, action-conditioned
-TS-JEPA**, **and** the simplest peer (`x(t)`-as-latent, monotone-by-construction) as an honest benchmark.
+Time-Series JEPA (TS-JEPA)**, **and** the simplest peer (`x(t)`-as-latent, monotone-by-construction) as an honest benchmark.
 Both are **constraint-valid** (zero violations), non-collapsing, and auditable, engaging the brief's
 "accurate, on-manifold, *and* auditable" bar (zero-violation is not *on-manifold*; separated in Sec. 5). **My
 recommendation is TS-JEPA for the Digital Liver world-model, made by measurement, not assertion.**

@@ -31,7 +31,8 @@
 
 \begin{center}
   {\Large\bfseries Decision Memo: Digital Liver World Model}\\[3pt]
-  {\normalsize Pratik Adhikari}
+  {\normalsize Pratik Adhikari \textperiodcentered\ AI/ML Engineer take-home}\\[1pt]
+  {\footnotesize Digital Liver World-Model team \textperiodcentered\ July 2026}
 \end{center}
 
 \noindent{\small\itshape For a Staff engineer. The reasoning is the deliverable; code and numbers are
@@ -41,7 +42,7 @@ evidence. All numbers reproduce from fixed seeds (see \texttt{README.md}); the f
 \section{Recommendation}
 
 I built the team's recommended JEPA (first a minimal GRU-JEPA, then a proper \textbf{masked,
-action-conditioned TS-JEPA}) \textbf{and} the simplest peer (\texttt{x(t)}-as-latent,
+action-conditioned Time-Series JEPA (TS-JEPA)}) \textbf{and} the simplest peer (\texttt{x(t)}-as-latent,
 monotone-by-construction) as an honest benchmark. Both are \textbf{constraint-valid} (zero violations),
 non-collapsing, and auditable, engaging the brief's ``accurate, on-manifold, \textit{and} auditable''
 bar (zero-violation $\neq$ \textit{on-manifold}; separated in Sec.~5). \textbf{My recommendation is TS-JEPA
