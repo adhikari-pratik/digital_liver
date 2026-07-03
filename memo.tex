@@ -44,7 +44,7 @@ I built the team's recommended JEPA (first a minimal GRU-JEPA, then a proper \te
 action-conditioned TS-JEPA}) \textbf{and} the simplest peer (\texttt{x(t)}-as-latent,
 monotone-by-construction) as an honest benchmark. Both are \textbf{constraint-valid} (zero violations),
 non-collapsing, and auditable, engaging the brief's ``accurate, on-manifold, \textit{and} auditable''
-bar (zero-violation $\neq$ \textit{on-manifold}; separated in \S5). \textbf{My recommendation is TS-JEPA
+bar (zero-violation $\neq$ \textit{on-manifold}; separated in Sec.~5). \textbf{My recommendation is TS-JEPA
 for the Digital Liver world-model, made by measurement, not assertion.}
 
 On the \textit{deliberately clean, fully-observed} toy a well-constrained baseline edges JEPA on raw
@@ -84,7 +84,7 @@ capacity chasing (JEPA's headline advantage); (2) the dynamics' natural coordina
 raw channels}; (3) there is \textbf{hidden state} to infer and carry; or (4) raw targets are
 high-dimensional/multimodal. The brief points squarely at (1): the real pipeline ``has its own stochastic
 substrate on top of \texttt{x(t)},'' stripped out on the clean slice. \textbf{So I put the conditions back
-and measured} (\S1 scorecard, \S6): each stress JEPA is built to exploit, noise (denoising), staleness
+and measured} (Sec.~1 scorecard, Sec.~6): each stress JEPA is built to exploit, noise (denoising), staleness
 (history-integration), unseen speeds (abstraction), is one where it draws level or wins, noise
 decisively. \textbf{The clean slice is the \textit{one} place JEPA doesn't pay; restore the domain's real
 stresses and it does.}
@@ -113,9 +113,9 @@ four-term VICReg+dec-anchor loss). Five seeds: \textbf{0.039 $\pm$ 0.006, zero v
 behind the baseline's 0.033 on the clean slice.
 
 \textbf{Verdict, measured.} The masked TS-JEPA is accurate, on-manifold (same cumsum-from-observed-state
-construction as the baseline, \S5), and auditable; \textbf{on the clean slice it \textit{ties}} the
+construction as the baseline, Sec.~5), and auditable; \textbf{on the clean slice it \textit{ties}} the
 constrained baseline (simpler and more stable), \textbf{and on the domain's real stresses it \textit{wins}
-(\S1, \S6).} \textbf{Why only a tie when clean?} The state is near-deterministic and low-rank (intrinsic
+(Sec.~1, Sec.~6).} \textbf{Why only a tie when clean?} The state is near-deterministic and low-rank (intrinsic
 effective rank \textbf{2.83}), and its one hidden driver is a static scalar the state already reflects:
 a GRU recovers it ($R^2$=0.66), yet an \textbf{oracle} given the true value gives no gain. Clean, the
 latent has almost nothing to abstract; re-introduce the stochastic substrate or partial observation and it
@@ -133,7 +133,7 @@ variance + covariance terms plus a reconstruction anchor (\texttt{z\_t $\to$ x\_
 omitting the anchor collapsed (D6). \textbf{Metric:} effective rank (\texttt{exp}-Shannon-entropy of the
 covariance eigenspectrum) vs the data's \textbf{intrinsic} dim (2.83, same estimator), not the nominal 16:
 with VICReg it holds $\sim$2.1, without it \textbf{collapses to $\sim$1.3}; TS-JEPA adds a BYOL-style EMA
-target. Necessary and effective, but, per \S3, not \textit{sufficient} to make the latent worth its
+target. Necessary and effective, but, per Sec.~3, not \textit{sufficient} to make the latent worth its
 cost on the clean slice.
 
 \section{Constraints on-manifold, and what they cost}
@@ -178,21 +178,21 @@ ratchets have reducible error, and there the model beats persist-last \textbf{$\
 progression speeds) and ties on treatment, but its learned absolute positions \textbf{cap it at the
 trained horizon}, a split, the recurrent baseline more capable there (\texttt{ts\_jepa.py}).
 \item \textbf{Domain-stress probes, where JEPA earns its keep} (\texttt{missing\_visits.py},
-\texttt{jepa\_denoise.py}; \S1 scorecard, \texttt{figures/}). The clean probe ranks the baseline first; the
+\texttt{jepa\_denoise.py}; Sec.~1 scorecard, \texttt{figures/}). The clean probe ranks the baseline first; the
 \textit{domain} probes flip it. \textbf{Sensor noise} (mechanism: \texttt{figures/arch\_denoised\_anchor.png})\textbf{:}
 a noise-augmented JEPA forecasts from a \textbf{\textit{denoised} current-state anchor (a learned clean
 estimate from the whole window, not the raw noisy observation)}, beating the baseline at every $\sigma$
-(\textbf{$-37\%$ at $\sigma$=0.10}, 3 seeds; \S1 table); an ablation reverting to the raw noisy anchor
+(\textbf{$-37\%$ at $\sigma$=0.10}, 3 seeds; Sec.~1 table); an ablation reverting to the raw noisy anchor
 collapses the gain to the baseline, proving the denoised anchor \textit{is} the mechanism, one a
 memoryless model cannot have. It trades ``passes exactly through the observed value'' (undesirable under
 noise anyway) while keeping monotone/bounded by construction. \textbf{Stale visit:} JEPA overtakes at
-\textbf{$\sim$12--15 months} (3 seeds; \S1). Each needs training \textit{for} the condition, the right
+\textbf{$\sim$12--15 months} (3 seeds; Sec.~1). Each needs training \textit{for} the condition, the right
 way to build for a noisy pipeline; K0$<$8 is outside the trained mask range.
 \item \textbf{Clinical, decision-grade readouts} (\texttt{clinical\_metrics.py}). Cirrhosis risk
 \textit{ranking} is strong (\textbf{AUC 0.927}; F\_pred 0.6--0.8 $\to$ 63\% truly cirrhotic), but
 thresholded detection exposes a real failure: \textbf{decompensation recall 0.27} (median +14 mo late),
 \textbf{cirrhosis-onset 0/20}, the point estimate under-shoots the tail: what aggregate MAE hid, and the
-argument for \S8's distributional head.
+argument for Sec.~8's distributional head.
 \item \textbf{The ceiling, plainly.} Within one generator, generalising = recovering the update rule, so
 the probe ranks models and shows \textit{failure} but \textbf{cannot} settle ``world model vs.\
 generator-inverter''. That needs a second generator, not built.
@@ -216,10 +216,10 @@ whose reasons are \textit{correlational, not causal}: the risk the brief flags.
 \section{Residual risk and what I would do next}
 
 \begin{itemize}
-\item \textbf{Probabilistic forecasting (the biggest gap).} \S6's tail miss is \textbf{aleatoric}
+\item \textbf{Probabilistic forecasting (the biggest gap).} Sec.~6's tail miss is \textbf{aleatoric}
 (susceptibility unidentified from short history), so a deep ensemble can't fix it (covers \textbf{28\%},
 \texttt{ensemble\_forecast.py}). A \textbf{mixture-density head} (\texttt{mdn\_forecast.py}) lifts
-\textbf{tail recall to 0.82} (cirrhosis @q90; the point estimate catches almost none of the tail, \S6)
+\textbf{tail recall to 0.82} (cirrhosis @q90; the point estimate catches almost none of the tail, Sec.~6)
 at no accuracy cost; a \textbf{persistent-latent CVAE} (\texttt{latent\_forecast.py}, D25, \textit{built,
 not future work}) stabilises its calibration. The tail-aware \textbf{union} (persistent z + mixture-NLL)
 lifts recall to \textbf{0.97} but is high-recall / low-precision, \textbf{experimental tail-risk
@@ -229,15 +229,15 @@ would commit each patient to one \textit{auditable archetype} and can't average 
 discreteness alone doesn't fix a weak decoder (mine under-leveraged z, D27) and trades KL-annealing for
 codebook-collapse. Named, not built (D28).
 \item \textbf{Validate JEPA where it pays, partly done.} I put the domain's stresses back and JEPA won
-(\S1/\S6). Next: the \textit{full} modality substrate (MRI/histology/3-D shape) the baseline cannot
+(Sec.~1/Sec.~6). Next: the \textit{full} modality substrate (MRI/histology/3-D shape) the baseline cannot
 parameterise at all, and a learned \textit{adaptive} anchor (denoise when noisy, trust the reading when
 clean); the ablation shows both modes already live in one model.
 \item \textbf{Causal, not correlational, reasons.} Mask information flow to the causal edges and validate
-counterfactuals against generator re-runs, attacking the \S7 shortcut.
+counterfactuals against generator re-runs, attacking the Sec.~7 shortcut.
 \end{itemize}
 
 \noindent\textbf{Bottom line:} I engaged JEPA for real (a minimal GRU-JEPA and the masked TS-JEPA),
-made both constraint-valid, on-manifold (critic-measured; the naive GRU drifts, \S5), and auditable, then
+made both constraint-valid, on-manifold (critic-measured; the naive GRU drifts, Sec.~5), and auditable, then
 \textit{measured} what it buys: on the clean slice it ties a simpler constrained baseline; restore the
 domain's real stresses and it \textbf{wins}: denoising noise ($-37\%$, ablation-proven), stale/missing
 visits, unseen speeds. \textbf{The coupled baseline is the delivered prototype for clean 8-D forecasting;
