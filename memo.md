@@ -154,24 +154,24 @@ Using portal hypertension P crossing a threshold as the decompensation proxy
 
 ## 8. Residual risk and what I would do next
 
-- **Probabilistic forecasting (the biggest gap now) — and I built the fix, not just named it.** §6's
-  tail miss is structural (a point estimate regresses to the middle), and the cheap fix fails: a
-  **5-model deep ensemble** doesn't recover it (90% intervals cover **28%** — `ensemble_forecast.py`)
-  because the uncertainty is **aleatoric** (susceptibility unidentified from short history), not
-  epistemic. So I trained the fix — a **mixture-density head** (`mdn_forecast.py`): K components each
-  through the *same* `ConstraintHead` (every sampled future constraint-valid). 3 seeds: it recovers
-  **cirrhosis recall 0.27 → 0.82** at the upper quantile, **no accuracy cost** (0.028 vs 0.033), but
-  its *calibration* is seed-variable (coverage 0.70 ± 0.15). I *tested* the predicted fix — a
-  per-trajectory latent (`latent_forecast.py`): it stabilises calibration (0.74 ± 0.03) but under-calls
-  the tail, and a diagnostic (`diagnose_latent.py`) pinned *why* — **not** under-dispersion (spread
-  matches the aleatoric std, ratio 1.05) but **MSE tail-bias** (predicts 0.75 for cirrhotics who reach
-  0.92). The fix is *tail-aware*: a **union** (persistent latent + per-step mixture-NLL,
-  `union_forecast.py`) lifts **recall 0.58 → 0.97** at the **best accuracy measured** (0.025) — leaving
-  a precision/coverage tradeoff, no free lunch (D25–D27).
+- **Probabilistic forecasting (the biggest gap).** §6's tail miss is structural (a point estimate
+  regresses to the middle) and **aleatoric** (susceptibility unidentified from short history) — so a
+  deep ensemble can't fix it (intervals cover **28%**, `ensemble_forecast.py`). A **mixture-density
+  head** (`mdn_forecast.py`, every component through the shared `ConstraintHead`) recovers **cirrhosis
+  recall 0.27 → 0.82** at no accuracy cost, but its calibration is seed-variable (0.70 ± 0.15). A
+  per-trajectory latent (`latent_forecast.py`) stabilises it (0.74 ± 0.03) yet under-calls the tail —
+  a diagnostic (`diagnose_latent.py`) showed *why*: not under-dispersion (spread matches reality) but
+  **MSE tail-bias**. The tail-aware **union** (persistent z + per-step mixture-NLL, `union_forecast.py`)
+  lifts **recall to 0.97** at the **best accuracy** (0.025), leaving a precision/coverage tradeoff — no
+  free lunch (D23–D27).
+- **Discrete latents (VQ-JEPA) for production.** The measured tail-bias *is* the continuous-latent
+  "blur" — a mean-seeking objective averages fast/slow progressors into an impossible middle. Same
+  TS-JEPA objective, discrete geometry: a **VQ codebook** commits each patient to one *auditable
+  clinical archetype* (explainability, not a blur). Honest caveats (D28): codebook-collapse replaces
+  KL-annealing, and the edge is muted on *this* toy where the hidden factor (susceptibility) is continuous.
 - **Validate JEPA where it pays.** Re-attach the real modality substrate; once observations carry
-  un-forecastable high-dimensional detail, the latent should overtake raw-space prediction — the
-  direct test of §2, and TS-JEPA is **already built** for it. (A first attempt with *separable*
-  nuisance failed; redesign uses *entangled* noise, D12.)
+  un-forecastable detail, the latent should overtake raw-space prediction — the direct test of §2,
+  TS-JEPA **already built** for it (D12).
 - **Causal, not correlational, reasons.** Mask information flow to the causal edges and validate
   counterfactuals against generator re-runs — attacking the §7 shortcut.
 

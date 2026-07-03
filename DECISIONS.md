@@ -533,6 +533,37 @@ mechanism (flare noise) until the diagnostic; the correct one (MSE tail-bias) po
 
 ---
 
+## D28. VQ-JEPA (discrete latents) as the production next step — captured, not built (a considered call)
+
+A reviewer proposed upgrading the continuous latent to a **discrete VQ codebook** (VQ-JEPA: same TS-JEPA
+objective + masking, discrete latent geometry). Assessed it honestly rather than agreeing:
+
+**Why it's well-motivated (not a buzzword — the brief rejects those).** The "continuous latents blur
+fast/slow progressors into a physically impossible average" argument is not just theory here — it is
+*exactly* the **MSE tail-bias I measured** (D27): a mean-seeking continuous objective averaged cirrhotics
+down to 0.75. A discrete code forces a hard "Archetype A or B" decision, which (a) can't average, and (b)
+is an **explainability win** — "forecasting this patient as Archetype 14" is auditable, aligning the
+uncertainty work with the brief's explainability bar. It also fits where world models are going (discrete
+tokenised dynamics).
+
+**Why NOT build it for this submission (the honest call):**
+1. It's a multi-week research effort (codebook utilisation, commitment loss, EMA codebook updates); bolting
+   it on now would risk bugs in a clean, working repo for a probable non-win here.
+2. **"Immune to posterior collapse" is a half-truth** — VQ trades KL-vanishing for **codebook collapse**
+   (dead codes), a different degeneracy needing its own management.
+3. **This toy's hidden factor is continuous.** The unobserved factor z must recover is per-patient
+   *susceptibility*, drawn continuously (0.5–2.0); the *discrete* factor (`disease_class`) is already given
+   as context, so it isn't what z carries. VQ would quantise a genuinely continuous factor → the archetype
+   edge is a **real-multimodal-clinical-data** argument, muted on this generator (could even add quantisation
+   error). And the anti-averaging benefit is already achieved differently by the union's mixture-NLL (D27).
+
+**Call:** capture it as the memo §8 production roadmap (with these caveats), do not build. This is the
+"how would you do it in production" readout answer, and it's stronger recorded-with-caveats than as an
+unqualified trump card. Ship the continuous story that is measured end-to-end; name the discrete upgrade
+as next.
+
+---
+
 ## D12. Boundary experiment — tried to EMPIRICALLY show JEPA winning; it did not (dead-end)
 
 **Motivation.** Memo §3/§8 *argue* the JEPA latent starts to pay once the stripped-out stochastic
