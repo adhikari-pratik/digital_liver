@@ -450,11 +450,15 @@ conditioned on the SAME `z`, decoded through the shared by-construction `Constra
 **3-seed result vs the memoryless MDN (D23):** coverage **0.74 ± 0.03** vs **0.70 ± 0.15** — the persistent
 latent is **~5× more stable** (the fix the memo predicted, but for calibration *stability*, not reaching
 nominal); recall 0.58 vs 0.82 (lower), precision 0.89 vs 0.71 (higher, steadier). **It does NOT reach the
-nominal 0.90.** Why (the real insight): a fixed-per-trajectory `z` captures **between-patient** subtype
-uncertainty but not **within-trajectory** flare noise (its rollout is deterministic given `z`); the
-memoryless MDN captures the second, not the first. **So they are complementary, not competing** — the
-calibrated head needs a persistent latent *for subtype* PLUS a per-step distributional term *for flare
-noise*. This is a sharper, evidence-backed statement than §8's original "a persistent latent would fix it."
+nominal 0.90.**
+
+> **CORRECTION (see D27).** I first attributed this to "a fixed `z` can't model within-trajectory flare
+> noise, so it under-covers." A diagnostic (`diagnose_latent.py`) **refuted** that: the model's spread is
+> actually well-calibrated (predictive std 0.074 ≈ true aleatoric std 0.070, ratio 1.05), and `z` does
+> encode susceptibility (corr 0.5). The real cause is **MSE tail-bias** — the mean-seeking loss predicts
+> 0.75 for cirrhotics who reach 0.92, so the interval is centred too low, not too narrow. The right fix is
+> a *tail-aware* objective, verified in D27. Leaving the wrong first read visible: it's the mistake the
+> diagnostic caught.
 
 Lesson: when an experiment posterior-collapses (or otherwise degenerates), it has not tested your
 hypothesis — fix the pathology first, then read the result. And "half-confirmed with a mechanism" beats
@@ -480,6 +484,52 @@ Packaging wins from the same review (all valid, verified against code, done):
   0.55); the headline is the 3-seed aggregate (0.82 / 0.70), reproducible via `mdn_forecast.py`.
 - **Added the MDN as an experimental row in the memo §1 table** (0.028 MAE, recall 0.27→0.82, calibration WIP)
   — surfaces the tail fix in the headline, clearly labelled experimental, not shipped.
+
+---
+
+## D27. Diagnosed WHY the persistent latent under-performed (my D25 reason was wrong) → the union fix
+
+Prompted by "did we implement it properly, maybe a mistake?" — the right question, because a persistent
+latent is easy to build in a way that *looks* right but is scientifically wrong. Two moves:
+
+**(a) Guard audit (a reviewer's checklist, verified against code).** All pass — most importantly the
+highest-risk one: **no posterior future-leakage.** The encoder sees ONLY the observed window
+`[:, :K_OBS+1]` in *both* training and eval (`latent_forecast.py` L98/L115, `union_forecast.py` L93/L126);
+it never sees months after K, so validation rollouts are honest. Also verified: `z` conditions the
+transition net then goes through `ConstraintHead` (never bypasses it); S drops stay gated by `is_ercp`
+(`z` can't drop S); `z` is sampled once per rollout (patient-level `[B,dz]`); no cirrhosis channel; KL
+tuned via free-bits; collapse tracked. So the D25 under-performance was **not** a bug.
+
+**(b) Diagnostic (`diagnose_latent.py`), which corrected my own D25 explanation.** For a trained model:
+- **Q1** corr(posterior `mu`, true susceptibility) = **0.50** → `z` DOES encode subtype.
+- **Q2** pushing `z` to +2σ moves final F by only **+0.068** → the decoder *under-leverages* `z`.
+- **Q3** model predictive std(final F) **0.074** ≈ true aleatoric std **0.070** (ratio **1.05**) → the spread
+  is **well-calibrated, NOT under-dispersed** (this is what refuted D25's "missing flare noise").
+- tail: true cirrhotics reach F **0.918**, but posterior-mean predicts **0.752** and even q90 only **0.870**
+  → the interval is centred too LOW. The cause is **MSE tail-bias** (a mean-seeking loss regresses the
+  fastest progressors toward the middle), not under-dispersion.
+
+**The fix that follows (`union_forecast.py`): a tail-aware objective.** Persistent `z` (subtype) + a
+per-step **mixture-density head conditioned on z**, trained by mixture-NLL (tail-aware, unlike MSE), every
+component through the shared `ConstraintHead`. 3-seed result vs the others:
+
+| model | MAE | q90 recall | q90 precision | 90% coverage |
+|---|---|---|---|---|
+| memoryless MDN (D23)     | 0.028 | 0.82 ± 0.10 | 0.71 ± 0.26 | 0.70 ± 0.15 |
+| persistent-z, MSE (D25)  | 0.032 | 0.58 ± 0.12 | **0.89** ± 0.10 | 0.74 ± **0.03** |
+| **union, z + mixture-NLL** | **0.025** | **0.97 ± 0.05** | 0.45 ± 0.02 | 0.75 ± 0.11 |
+
+The tail-bias diagnosis is **confirmed**: the tail-aware objective lifts recall 0.58 → **0.97** at the
+**best accuracy measured** (0.025). Honest costs (no free lunch): precision falls to 0.45 (aggressive q90
+over-flags) and coverage-stability regresses (±0.11 vs persistent-z's ±0.03) — adding per-step sampling
+back partly reintroduces the variance a reviewer explicitly warned about. So there is **no single dominant
+model**: MDN (balanced, unstable), persistent-z (precise, stable, tail-biased), union (best accuracy +
+recall, lower precision). It's a genuine recall↔precision↔stability tradeoff — the assignment's three-way
+tension, in the probabilistic domain.
+
+Lesson: "it under-performed" is a symptom, not a diagnosis. Instrument WHY (does the latent encode the
+factor? does the decoder use it? is the spread calibrated?) before writing the mechanism — I had the wrong
+mechanism (flare noise) until the diagnostic; the correct one (MSE tail-bias) pointed straight at the fix.
 
 ---
 

@@ -159,14 +159,15 @@ Using portal hypertension P crossing a threshold as the decompensation proxy
   **5-model deep ensemble** doesn't recover it (90% intervals cover **28%** — `ensemble_forecast.py`)
   because the uncertainty is **aleatoric** (susceptibility unidentified from short history), not
   epistemic. So I trained the fix — a **mixture-density head** (`mdn_forecast.py`): K components each
-  decoded through the *same* `ConstraintHead`, so every sampled future is constraint-valid (sampling a
-  valid *mode*, not raw noise that could break a ratchet). Measured over 3 seeds it recovers what the
-  ensemble couldn't — **cirrhosis recall 0.27 → 0.82** at the upper quantile — at **no accuracy cost**
-  (0.028 vs 0.033). Its interval *calibration* stays seed-variable (coverage 0.70 ± 0.15)
-  — the memoryless per-step sampler under-commits. I then *tested* the predicted fix
-  (`latent_forecast.py`, D25): a per-trajectory latent (sampled once, not per step) **stabilises
-  calibration 5×** (0.74 ± 0.03) but doesn't alone reach nominal — it captures *between-patient* subtype,
-  not *within-trajectory* flare noise, so a calibrated head needs both.
+  through the *same* `ConstraintHead` (every sampled future constraint-valid). 3 seeds: it recovers
+  **cirrhosis recall 0.27 → 0.82** at the upper quantile, **no accuracy cost** (0.028 vs 0.033), but
+  its *calibration* is seed-variable (coverage 0.70 ± 0.15). I *tested* the predicted fix — a
+  per-trajectory latent (`latent_forecast.py`): it stabilises calibration (0.74 ± 0.03) but under-calls
+  the tail, and a diagnostic (`diagnose_latent.py`) pinned *why* — **not** under-dispersion (spread
+  matches the aleatoric std, ratio 1.05) but **MSE tail-bias** (predicts 0.75 for cirrhotics who reach
+  0.92). The fix is *tail-aware*: a **union** (persistent latent + per-step mixture-NLL,
+  `union_forecast.py`) lifts **recall 0.58 → 0.97** at the **best accuracy measured** (0.025) — leaving
+  a precision/coverage tradeoff, no free lunch (D25–D27).
 - **Validate JEPA where it pays.** Re-attach the real modality substrate; once observations carry
   un-forecastable high-dimensional detail, the latent should overtake raw-space prediction — the
   direct test of §2, and TS-JEPA is **already built** for it. (A first attempt with *separable*
