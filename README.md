@@ -32,7 +32,9 @@ the three axes that define it** (baseline vs TS-JEPA, ratchet MAE; multi-seed ga
   (critic 0.963), and auditable, and it measurably wins **denoising, partial observation, and
   generalisation** — the properties of real clinical data. The baseline wins only the sanitised
   clean-slice point-accuracy (and even that is partly borrowed structure it cannot scale to the real
-  modalities). Ship JEPA; keep the baseline as the on-ramp and the honest benchmark.
+  modalities). **The delivered prototype here is the coupled baseline** (checkpointed `baseline.pt`, best
+  on clean 8-D, the constraint showcase); **TS-JEPA is the architecture recommendation for the real
+  noisy/sparse/high-dim pipeline** — measured, not asserted.
 - **Honest correction:** my first read was that JEPA carried a *fundamental* accuracy cost
   (`jepa_sweep.py`). That was a decoder/target-space wiring bug, found and fixed (D14) — the gap was
   0.52→0.12, and a proper masked TS-JEPA reached ~0.04. `jepa_sweep.py` is kept as the record of the
@@ -47,6 +49,14 @@ pip install torch numpy matplotlib
 CPU is fine (models are ~15k params). All scripts are deterministic (fixed seeds).
 
 ## Run
+
+> **Runtimes (CPU).** Scripts that only load a checkpoint run in **seconds** (`eval.py`, `compare.py`,
+> `probe_metrics.py`, `clinical_metrics.py`, `eval_mdn.py`, `explain*.py`, `verify_claims.py`). Scripts
+> that **train a model in-process** print epoch progress and take longer — they are *not* hanging:
+> `train.py` ~2 min; `ts_jepa.py` (5 seeds) ~3–4 min; `mdn_forecast.py` / `latent_forecast.py` /
+> `union_forecast.py` / `ensemble_forecast.py` ~1–2 min; the D29 probes `missing_visits.py` and
+> `jepa_denoise.py` (3 seeds each) ~2–3 min; `jepa_augmented.py` (3 models) ~4 min; `figures_showcase.py`
+> ~3 min.
 
 ```bash
 python test_invariants.py  # prove the by-construction guarantees hold for RANDOM weights (monotonicity, S-gating, bounds, F*C gate, no cirrhosis channel)

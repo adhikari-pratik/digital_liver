@@ -29,8 +29,10 @@ multi-seed gated; `figures/`, seed-0 illustrative):
 The pattern is not luck: JEPA wins exactly **denoising, partial observation, and generalisation** — the
 properties of *real* clinical data — while the baseline wins only the sanitised slice, and even that win
 is *partly borrowed* (it hardcodes generator structure we will not have in production) and cannot scale
-to the real modalities (MRI, histology, 3-D shape) — it is memoryless and low-dim. **So: ship JEPA for
-the real problem; keep the baseline as the on-ramp and the honest point-accuracy benchmark.** One honest
+to the real modalities (MRI, histology, 3-D shape) — it is memoryless and low-dim. **So, concretely: the
+coupled baseline is the delivered prototype for the clean 8-D exercise** (checkpointed `baseline.pt`, best
+point-accuracy, the constraint showcase); **TS-JEPA is the architecture I recommend for the real, noisy,
+sparse, high-dim Digital Liver** — where I *measured* it winning, not merely proposed it. One honest
 correction on the record: my first read that JEPA carried a *fundamental* accuracy cost was a bug in my
 own wiring, found and fixed (§3) — "wins where it matters, ties on the clean toy," not "costs."
 
@@ -130,12 +132,14 @@ soft/bidirectional and don't admit a clean form — the honest remaining edge.
   the recurrent baseline more capable on horizon (`ts_jepa.py`).
 - **Domain-stress probes — where JEPA earns its keep (`missing_visits.py`, `jepa_denoise.py`; §1
   scorecard, `figures/`).** The clean probe ranks the baseline first; the *domain* probes flip it.
-  **Sensor noise:** a noise-augmented JEPA that denoises the current-state anchor from the whole window
-  beats the baseline at every σ (σ=0.10 **0.048 vs 0.076**, −37%, 3 seeds); an ablation reverting to the
-  raw noisy anchor collapses the gain — the denoised anchor *is* the mechanism, one a memoryless model
-  cannot have. **Stale visit:** JEPA overtakes at **~12–15 months** (0.064 vs 0.065, 3 seeds). Bounds:
-  each needs training *for* the condition (the right way to build for a noisy pipeline); K0<8 is outside
-  the trained mask range.
+  **Sensor noise:** a noise-augmented JEPA that **forecasts from a *denoised* current-state anchor — a
+  learned clean estimate from the whole window, not the raw noisy observation** — beats the baseline at
+  every σ (σ=0.10 **0.048 vs 0.076**, −37%, 3 seeds); an ablation reverting to the raw noisy anchor
+  collapses the gain back to the baseline, proving the denoised anchor *is* the mechanism (one a memoryless
+  model cannot have). It trades "passes exactly through the observed value" — undesirable under noise
+  anyway — while keeping monotone/bounded by construction. **Stale visit:** JEPA overtakes at **~12–15
+  months** (0.064 vs 0.065, 3 seeds). Bounds: each needs training *for* the condition (the right way to
+  build for a noisy pipeline); K0<8 is outside the trained mask range.
 - **Clinical, decision-grade readouts (`clinical_metrics.py`).** Cirrhosis risk *ranking* is strong
   (**AUC 0.927**; F_pred 0.6–0.8 → 63% truly cirrhotic), but thresholded detection exposes a real
   failure: **decompensation recall 0.27** (median +14 mo late), **cirrhosis-onset 0/20** — the point
@@ -183,6 +187,7 @@ Using portal hypertension P crossing a threshold as the decompensation proxy
 constraint-valid, on-manifold (critic-measured; the naive GRU drifts, §5), and auditable, then *measured*
 what it buys: on the clean, fully-observed slice it ties a simpler constrained baseline, but the moment
 the domain's real stresses return it **wins** — denoising sensor noise (−37%, ablation-proven), surviving
-stale/missing visits, and generalising to unseen progression speeds. **So the recommendation is JEPA for
-the Digital Liver; the baseline is the on-ramp and the honest benchmark, not the ship.** My earlier
+stale/missing visits, and generalising to unseen progression speeds. **So: the coupled baseline is the
+delivered prototype and honest benchmark for clean 8-D forecasting; TS-JEPA is the architecture
+recommendation for the real noisy/sparse/high-dim pipeline — measured, not asserted.** My earlier
 "fundamental cost" claim was a bug in my own code — found, fixed, and reported rather than buried.
