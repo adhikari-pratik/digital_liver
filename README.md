@@ -91,7 +91,12 @@ python jepa_augmented.py   # step 2: noise-aug helps but the shared anchor caps 
 python jepa_denoise.py     # step 3: DENOISED-ANCHOR JEPA beats the baseline under noise (-37% @ sigma=.10, 3 seeds) + built-in ablation proving the mechanism
 python trajectory_metrics.py # baseline vs TS-JEPA under DTW / C-index / Wasserstein-1 (baseline wins the CLEAN metrics too -- honest)
 python figures_showcase.py # -> figures/fig_scorecard.png, fig_noise.png, fig_staleness.png, fig_trajectory.png (all real seed-0 outputs)
+python export_demo_data.py # precompute real rollouts for the interactive demo (inlined into demo.html)
 ```
+
+**Interactive demo:** open **`demo.html`** in a browser (self-contained, no server) — drag *sensor noise*
+and *months since last visit* and watch the memoryless baseline drift while TS-JEPA's denoised anchor
+holds. Every line is a real seed-0 rollout (D29).
 
 ## Files
 
