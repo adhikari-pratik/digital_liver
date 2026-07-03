@@ -1,4 +1,4 @@
-% Decision Memo — Digital Liver World Model
+% Decision Memo: Digital Liver World Model
 % Compile:  pdflatex memo.tex   (run once; no bibliography/refs to resolve)
 % Targets <= 3 pages. If it spills or underfills, tune these two knobs:
 %   - font size:  10pt (below) -> 11pt loosens, or add \small after \begin{document} to tighten
@@ -30,7 +30,8 @@
 \begin{document}
 
 \begin{center}
-  {\Large\bfseries Decision Memo --- Digital Liver World Model}
+  {\Large\bfseries Decision Memo: Digital Liver World Model}\\[3pt]
+  {\normalsize Pratik Adhikari}
 \end{center}
 
 \noindent{\small\itshape For a Staff engineer. The reasoning is the deliverable; code and numbers are
@@ -39,17 +40,17 @@ evidence. All numbers reproduce from fixed seeds (see \texttt{README.md}); the f
 
 \section{Recommendation}
 
-I built the team's recommended JEPA --- first a minimal GRU-JEPA, then a proper \textbf{masked,
-action-conditioned TS-JEPA} --- \textbf{and} the simplest peer (\texttt{x(t)}-as-latent,
+I built the team's recommended JEPA (first a minimal GRU-JEPA, then a proper \textbf{masked,
+action-conditioned TS-JEPA}) \textbf{and} the simplest peer (\texttt{x(t)}-as-latent,
 monotone-by-construction) as an honest benchmark. Both are \textbf{constraint-valid} (zero violations),
-non-collapsing, and auditable --- engaging the brief's ``accurate, on-manifold, \textit{and} auditable''
+non-collapsing, and auditable, engaging the brief's ``accurate, on-manifold, \textit{and} auditable''
 bar (zero-violation $\neq$ \textit{on-manifold}; separated in \S5). \textbf{My recommendation is TS-JEPA
 for the Digital Liver world-model, made by measurement, not assertion.}
 
 On the \textit{deliberately clean, fully-observed} toy a well-constrained baseline edges JEPA on raw
-point-accuracy (ratchet MAE \textbf{0.033} vs \textbf{0.039}, K=24, free rollout) --- a simpler model is
+point-accuracy (ratchet MAE \textbf{0.033} vs \textbf{0.039}, K=24, free rollout): a simpler model is
 right \textit{if the data ever looked like this}. But the real domain is defined by three stresses this
-toy strips out. On the one that dominates real sensor data --- noise --- \textbf{JEPA wins decisively,
+toy strips out. On the one that dominates real sensor data (noise), \textbf{JEPA wins decisively,
 outside seed noise}; on the other two it draws level or edges ahead (baseline vs TS-JEPA, ratchet MAE;
 multi-seed gated; \texttt{figures/}, seed-0):
 
@@ -58,44 +59,44 @@ multi-seed gated; \texttt{figures/}, seed-0):
 \toprule
 \textbf{axis (the real domain)} & \textbf{baseline} & \textbf{TS-JEPA} \\
 \midrule
-clean, fresh, fully-observed --- \textit{point accuracy} & \textbf{0.033} & 0.039 \\
-sensor noise $\sigma$=0.10 --- \textit{denoising} & 0.076 & \textbf{0.048} ($-37\%$, outside seed noise, ablation-proven, \texttt{jepa\_denoise.py}) \\
-stale last visit $\sim$15 mo --- \textit{partial observation} & 0.065 & 0.064 ($\approx$ tie --- crossover, within seed noise, \texttt{missing\_visits.py}) \\
-held-out susceptibility --- \textit{generalisation} & 0.099 & 0.092 (modest edge, single-config, \texttt{ts\_jepa.py}) \\
+clean, fresh, fully-observed (\textit{point accuracy}) & \textbf{0.033} & 0.039 \\
+sensor noise $\sigma$=0.10 (\textit{denoising}) & 0.076 & \textbf{0.048} ($-37\%$, outside seed noise, ablation-proven, \texttt{jepa\_denoise.py}) \\
+stale last visit $\sim$15 mo (\textit{partial observation}) & 0.065 & 0.064 ($\approx$ tie, crossover, within seed noise, \texttt{missing\_visits.py}) \\
+held-out susceptibility (\textit{generalisation}) & 0.099 & 0.092 (modest edge, single-config, \texttt{ts\_jepa.py}) \\
 \bottomrule
 \end{tabularx}
 \end{center}
 
-The pattern is not luck: as the data gets more realistic --- noisy, stale, unseen --- JEPA moves from
+The pattern is not luck: as the data gets more realistic (noisy, stale, unseen), JEPA moves from
 \textit{behind} on the toy to \textit{level-or-ahead}, decisively so under noise. The baseline wins only
-the sanitised slice, and even that win is \textit{partly borrowed} --- it hardcodes generator structure we
+the sanitised slice, and even that win is \textit{partly borrowed}: it hardcodes generator structure we
 won't have in production, and being memoryless and low-dim it cannot scale to the real modalities (MRI,
 histology, 3-D shape). \textbf{So, concretely: the coupled baseline is the delivered prototype for the
 clean 8-D exercise} (\texttt{baseline.pt}, best point-accuracy, the constraint showcase); \textbf{TS-JEPA
-is the architecture I recommend for the real, noisy, sparse, high-dim Digital Liver} --- measured winning,
+is the architecture I recommend for the real, noisy, sparse, high-dim Digital Liver}, measured winning,
 not merely proposed.
 
-\section{What a predictive latent buys --- and precisely when it pays}
+\section{What a predictive latent buys, and precisely when it pays}
 
 Predicting a future \textit{representation} rather than raw values pays when: (1) observations carry a
 large \textbf{stochastic/nuisance substrate} (imaging speckle, sensor noise) a raw loss would waste
-capacity chasing --- JEPA's headline advantage; (2) the dynamics' natural coordinates \textbf{are not the
+capacity chasing (JEPA's headline advantage); (2) the dynamics' natural coordinates \textbf{are not the
 raw channels}; (3) there is \textbf{hidden state} to infer and carry; or (4) raw targets are
 high-dimensional/multimodal. The brief points squarely at (1): the real pipeline ``has its own stochastic
 substrate on top of \texttt{x(t)},'' stripped out on the clean slice. \textbf{So I put the conditions back
-and measured} (\S1 scorecard, \S6): each stress JEPA is built to exploit --- noise (denoising), staleness
-(history-integration), unseen speeds (abstraction) --- is one where it draws level or wins, noise
+and measured} (\S1 scorecard, \S6): each stress JEPA is built to exploit, noise (denoising), staleness
+(history-integration), unseen speeds (abstraction), is one where it draws level or wins, noise
 decisively. \textbf{The clean slice is the \textit{one} place JEPA doesn't pay; restore the domain's real
 stresses and it does.}
 
-\section{Did the JEPA objective cost accuracy? I measured it --- and found my own bug}
+\section{Did the JEPA objective cost accuracy? I measured it, and found my own bug}
 
 The brief calls this tension the heart of the exercise; I chased it by measurement, and the honest arc
 matters more than a clean story.
 
 \textbf{First attempt, and a wrong conclusion.} My minimal GRU-JEPA measured a $\sim$10$\times$ gap (0.52
 vs 0.05) and I nearly wrote it up as a \textit{fundamental} auditability-vs-expressiveness tension. It
-wasn't --- a \textbf{decoder/target-space mismatch}: the decoder saw only the \textit{predicted}
+wasn't; it was a \textbf{decoder/target-space mismatch}: the decoder saw only the \textit{predicted}
 \texttt{zhat}, never the invariance \textit{target} \texttt{enc(x\_\{t+1\})}, so the better the latent
 prediction, the more \texttt{zhat} landed where the decoder couldn't read it. \textbf{The fix (one term):}
 decode the true future embedding through the \textit{same} head $\to$ \textbf{0.52 $\to$ 0.12}, latent
@@ -105,34 +106,34 @@ a fundamental limit, suspect your own compute graph first.
 \textbf{Then the team's actual architecture} (diagram: \texttt{figures/arch\_tsjepa.png}; the shared
 by-construction head: \texttt{figures/arch\_constraint\_head.png})\textbf{.} A masked, action-conditioned
 \textbf{TS-JEPA}: over a transformer feature$\times$time grid, mask the future \textit{state} but
-\textbf{keep the known treatment plan} (UDCA/ERCP tokens --- we know the plan, not the outcome); predict
+\textbf{keep the known treatment plan} (UDCA/ERCP tokens, we know the plan, not the outcome); predict
 the EMA target-encoder's embeddings at masked months; decode \textbf{by construction} (cumsum of
 non-negative increments from the last observed state; S = creep $-$ ERCP relief; fast fields via sigmoid;
-four-term VICReg+dec-anchor loss). Five seeds: \textbf{0.039 $\pm$ 0.006, zero violations} --- a step
+four-term VICReg+dec-anchor loss). Five seeds: \textbf{0.039 $\pm$ 0.006, zero violations}, a step
 behind the baseline's 0.033 on the clean slice.
 
 \textbf{Verdict, measured.} The masked TS-JEPA is accurate, on-manifold (same cumsum-from-observed-state
-construction as the baseline --- \S5), and auditable; \textbf{on the clean slice it \textit{ties}} the
+construction as the baseline, \S5), and auditable; \textbf{on the clean slice it \textit{ties}} the
 constrained baseline (simpler and more stable), \textbf{and on the domain's real stresses it \textit{wins}
 (\S1, \S6).} \textbf{Why only a tie when clean?} The state is near-deterministic and low-rank (intrinsic
-effective rank \textbf{2.83}), and its one hidden driver is a static scalar the state already reflects ---
+effective rank \textbf{2.83}), and its one hidden driver is a static scalar the state already reflects:
 a GRU recovers it ($R^2$=0.66), yet an \textbf{oracle} given the true value gives no gain. Clean, the
 latent has almost nothing to abstract; re-introduce the stochastic substrate or partial observation and it
-does --- why JEPA is the pick for the real problem.
+does. That is why JEPA is the pick for the real problem.
 
 \textbf{The three named peers.} \textit{\texttt{x(t)}-as-latent} is the benchmark peer (it wins the clean
 slice). \textit{A plain Neural-ODE} buys continuous-time sampling regular monthly data doesn't need and
-still needs the same head (D0). \textit{A supervised decoder} is the baseline's family --- the value is the
+still needs the same head (D0). \textit{A supervised decoder} is the baseline's family; the value is the
 \textit{constrained} parameterisation.
 
-\section{Representation collapse --- the learned-latent risk, engaged}
+\section{Representation collapse: the learned-latent risk, engaged}
 
 A learned latent can collapse to a constant the predictor trivially matches. \textbf{Mechanism:} VICReg
 variance + covariance terms plus a reconstruction anchor (\texttt{z\_t $\to$ x\_t}); an early version
 omitting the anchor collapsed (D6). \textbf{Metric:} effective rank (\texttt{exp}-Shannon-entropy of the
 covariance eigenspectrum) vs the data's \textbf{intrinsic} dim (2.83, same estimator), not the nominal 16:
 with VICReg it holds $\sim$2.1, without it \textbf{collapses to $\sim$1.3}; TS-JEPA adds a BYOL-style EMA
-target. Necessary and effective --- but, per \S3, not \textit{sufficient} to make the latent worth its
+target. Necessary and effective, but, per \S3, not \textit{sufficient} to make the latent worth its
 cost on the clean slice.
 
 \section{Constraints on-manifold, and what they cost}
@@ -140,8 +141,8 @@ cost on the clean slice.
 The one-directional fields are enforced \textbf{by construction}: F, D, P, M as \texttt{prev + softplus($\cdot$)}
 clamped to bounds (a decrease is \textit{unrepresentable}; a smooth clamp-free variant measured
 \textit{worse}, D23), A/C/flare as bounded \texttt{sigmoid($\cdot$)}, S as a monotone creep minus an
-ERCP-gated relief (resolving a spec contradiction on S's direction --- D1). Result: \textbf{exactly zero
-violations} across every model and rollout --- a property of the parameterisation, not the loss. The model
+ERCP-gated relief (resolving a spec contradiction on S's direction, D1). Result: \textbf{exactly zero
+violations} across every model and rollout, a property of the parameterisation, not the loss. The model
 \textit{uses} the exception: at ERCP it predicts the S step-down \textbf{149/149} times ($\Delta$S $-0.173$
 vs true $-0.174$) while creeping up otherwise (\texttt{probe\_metrics.py}). The alternatives the brief
 names I rejected: a \textit{loss penalty} (only discourages) and \textit{projection} (guarantee lives
@@ -149,52 +150,52 @@ names I rejected: a \textit{loss penalty} (only discourages) and \textit{project
 
 \textbf{But zero violations $\neq$ on-manifold.} A learned manifold critic (\texttt{manifold\_critic.py},
 AUC 1.0 on valid-but-wrong transitions) scores the baseline \textbf{0.996} and \textbf{TS-JEPA 0.963}
-(single-seed) against \textbf{real} genuine generator transitions \textbf{0.995} --- both on-manifold ---
+(single-seed) against \textbf{real} genuine generator transitions \textbf{0.995} (both on-manifold),
 but the naive \textbf{GRU-JEPA 0.726} (off-manifold \textit{despite} 0 violations: step-by-step
 re-encoding compounds error). The cumsum-from-anchor construction both share stays on the surface.
 Constraints bound the box; the critic checks you are on it.
 
 \textbf{Engaging the coupling (the interesting part).} Per-field monotonicity is easy; I built the hardest
-coupling into the head --- \textbf{M as a hazard of sustained F$\cdot$C}: M's increment is \textit{gated by
-prev F$\cdot$C} (with C=0, M can't move --- \texttt{test\_invariants.py}). It holds (\texttt{corr($\Delta$M,
+coupling into the head, \textbf{M as a hazard of sustained F$\cdot$C}: M's increment is \textit{gated by
+prev F$\cdot$C} (with C=0, M can't move, \texttt{test\_invariants.py}). It holds (\texttt{corr($\Delta$M,
 F$\cdot$C)} 0.57 $\to$ \textbf{0.98}), \textit{halves} M's error (0.053 $\to$ 0.028), and lifts the whole
 model (0.037 $\to$ \textbf{0.033}); cirrhosis = g(F) is the same ``derive, don't predict'' readout. The
 couplings I left \textit{learned} (flares$\leftrightarrow$A/C, treatment$\to$A/C) are soft/bidirectional
-and resist a clean form --- the honest remaining edge.
+and resist a clean form, the honest remaining edge.
 
 \section{An evaluation that could have falsified the model}
 
 \begin{itemize}
 \item \textbf{Accuracy vs the noise floor, not a flatline.} Error is reported beside the irreducible floor
 (spread of independent generator re-runs): fast channels A/C/flare sit \textit{at} the floor; only
-ratchets have reducible error --- and there the model beats persist-last \textbf{$\sim$3$\times$} (0.033 vs
+ratchets have reducible error, and there the model beats persist-last \textbf{$\sim$3$\times$} (0.033 vs
 0.096) and predict-mean \textbf{$\sim$4.6$\times$} (\texttt{probe\_metrics.py}).
 \item \textbf{Generalisation probe (out-of-distribution).} Baseline ratchet MAE at K=24 (in-dist
 \textbf{0.033}): held-out susceptibility $\to$ \textbf{0.099 (3$\times$)}; unseen late treatment $\to$
-\textbf{0.031} (unchanged --- generalises over the \textit{observed} lever); beyond horizon $\to$
+\textbf{0.031} (unchanged, generalises over the \textit{observed} lever); beyond horizon $\to$
 \textbf{0.100 (3$\times$)}. So: generalises over the observable, fails over the hidden/unseen. TS-JEPA
 \textbf{slightly edges the baseline on held-out susceptibility} (a hint the latent helps on unseen
 progression speeds) and ties on treatment, but its learned absolute positions \textbf{cap it at the
-trained horizon} --- a split, the recurrent baseline more capable there (\texttt{ts\_jepa.py}).
-\item \textbf{Domain-stress probes --- where JEPA earns its keep} (\texttt{missing\_visits.py},
+trained horizon}, a split, the recurrent baseline more capable there (\texttt{ts\_jepa.py}).
+\item \textbf{Domain-stress probes, where JEPA earns its keep} (\texttt{missing\_visits.py},
 \texttt{jepa\_denoise.py}; \S1 scorecard, \texttt{figures/}). The clean probe ranks the baseline first; the
 \textit{domain} probes flip it. \textbf{Sensor noise} (mechanism: \texttt{figures/arch\_denoised\_anchor.png})\textbf{:}
-a noise-augmented JEPA forecasts from a \textbf{\textit{denoised} current-state anchor --- a learned clean
-estimate from the whole window, not the raw noisy observation} --- beating the baseline at every $\sigma$
+a noise-augmented JEPA forecasts from a \textbf{\textit{denoised} current-state anchor (a learned clean
+estimate from the whole window, not the raw noisy observation)}, beating the baseline at every $\sigma$
 (\textbf{$-37\%$ at $\sigma$=0.10}, 3 seeds; \S1 table); an ablation reverting to the raw noisy anchor
-collapses the gain to the baseline, proving the denoised anchor \textit{is} the mechanism --- one a
+collapses the gain to the baseline, proving the denoised anchor \textit{is} the mechanism, one a
 memoryless model cannot have. It trades ``passes exactly through the observed value'' (undesirable under
 noise anyway) while keeping monotone/bounded by construction. \textbf{Stale visit:} JEPA overtakes at
-\textbf{$\sim$12--15 months} (3 seeds; \S1). Each needs training \textit{for} the condition --- the right
+\textbf{$\sim$12--15 months} (3 seeds; \S1). Each needs training \textit{for} the condition, the right
 way to build for a noisy pipeline; K0$<$8 is outside the trained mask range.
 \item \textbf{Clinical, decision-grade readouts} (\texttt{clinical\_metrics.py}). Cirrhosis risk
 \textit{ranking} is strong (\textbf{AUC 0.927}; F\_pred 0.6--0.8 $\to$ 63\% truly cirrhotic), but
 thresholded detection exposes a real failure: \textbf{decompensation recall 0.27} (median +14 mo late),
-\textbf{cirrhosis-onset 0/20} --- the point estimate under-shoots the tail: what aggregate MAE hid, and the
+\textbf{cirrhosis-onset 0/20}, the point estimate under-shoots the tail: what aggregate MAE hid, and the
 argument for \S8's distributional head.
 \item \textbf{The ceiling, plainly.} Within one generator, generalising = recovering the update rule, so
 the probe ranks models and shows \textit{failure} but \textbf{cannot} settle ``world model vs.\
-generator-inverter'' --- that needs a second generator, not built.
+generator-inverter''. That needs a second generator, not built.
 \end{itemize}
 
 \section{``Why did the model predict decompensation at month 30?''}
@@ -204,11 +205,11 @@ Using portal hypertension P crossing a threshold as the decompensation proxy
 
 \begin{itemize}
 \item \textbf{Structural, auditable for free.} \texttt{P(t) = P(t$_0$) + $\Sigma$ non-negative increments}
---- a running total, every step inspectable, and \textbf{the same audit runs on the JEPA} (identical
+is a running total, every step inspectable, and \textbf{the same audit runs on the JEPA} (identical
 accumulation): auditability transfers to the latent model.
 \item \textbf{Attribution reveals a correlational shortcut} (model-faithful perturbation,
 \texttt{explain.py}): the model keys the P-increment on \textbf{flare ($\sim$62\%)}, slow drivers F/P only
-$\sim$16\% --- flare \textit{leads} the A/C surges that raise the ratchets, so it's a faithful predictor
+$\sim$16\%; flare \textit{leads} the A/C surges that raise the ratchets, so it's a faithful predictor
 whose reasons are \textit{correlational, not causal}: the risk the brief flags.
 \end{itemize}
 
@@ -218,29 +219,29 @@ whose reasons are \textit{correlational, not causal}: the risk the brief flags.
 \item \textbf{Probabilistic forecasting (the biggest gap).} \S6's tail miss is \textbf{aleatoric}
 (susceptibility unidentified from short history), so a deep ensemble can't fix it (covers \textbf{28\%},
 \texttt{ensemble\_forecast.py}). A \textbf{mixture-density head} (\texttt{mdn\_forecast.py}) lifts
-\textbf{tail recall to 0.82} (cirrhosis @q90; the point estimate catches almost none of the tail --- \S6)
-at no accuracy cost; a \textbf{persistent-latent CVAE} (\texttt{latent\_forecast.py}, D25 --- \textit{built,
+\textbf{tail recall to 0.82} (cirrhosis @q90; the point estimate catches almost none of the tail, \S6)
+at no accuracy cost; a \textbf{persistent-latent CVAE} (\texttt{latent\_forecast.py}, D25, \textit{built,
 not future work}) stabilises its calibration. The tail-aware \textbf{union} (persistent z + mixture-NLL)
-lifts recall to \textbf{0.97} but is high-recall / low-precision --- \textbf{experimental tail-risk
+lifts recall to \textbf{0.97} but is high-recall / low-precision, \textbf{experimental tail-risk
 evidence, \textit{not} a calibrated readout} (D23--D27).
-\item \textbf{Discrete latents (VQ-JEPA) --- a research direction, not a guaranteed win.} A VQ codebook
-would commit each patient to one \textit{auditable archetype} and can't average the tail --- but
+\item \textbf{Discrete latents (VQ-JEPA): a research direction, not a guaranteed win.} A VQ codebook
+would commit each patient to one \textit{auditable archetype} and can't average the tail, but
 discreteness alone doesn't fix a weak decoder (mine under-leveraged z, D27) and trades KL-annealing for
 codebook-collapse. Named, not built (D28).
-\item \textbf{Validate JEPA where it pays --- partly done.} I put the domain's stresses back and JEPA won
+\item \textbf{Validate JEPA where it pays, partly done.} I put the domain's stresses back and JEPA won
 (\S1/\S6). Next: the \textit{full} modality substrate (MRI/histology/3-D shape) the baseline cannot
 parameterise at all, and a learned \textit{adaptive} anchor (denoise when noisy, trust the reading when
-clean) --- the ablation shows both modes already live in one model.
+clean); the ablation shows both modes already live in one model.
 \item \textbf{Causal, not correlational, reasons.} Mask information flow to the causal edges and validate
-counterfactuals against generator re-runs --- attacking the \S7 shortcut.
+counterfactuals against generator re-runs, attacking the \S7 shortcut.
 \end{itemize}
 
-\noindent\textbf{Bottom line:} I engaged JEPA for real --- a minimal GRU-JEPA and the masked TS-JEPA ---
+\noindent\textbf{Bottom line:} I engaged JEPA for real (a minimal GRU-JEPA and the masked TS-JEPA),
 made both constraint-valid, on-manifold (critic-measured; the naive GRU drifts, \S5), and auditable, then
 \textit{measured} what it buys: on the clean slice it ties a simpler constrained baseline; restore the
-domain's real stresses and it \textbf{wins} --- denoising noise ($-37\%$, ablation-proven), stale/missing
+domain's real stresses and it \textbf{wins}: denoising noise ($-37\%$, ablation-proven), stale/missing
 visits, unseen speeds. \textbf{The coupled baseline is the delivered prototype for clean 8-D forecasting;
 TS-JEPA is the recommendation for the real noisy/sparse/high-dim pipeline.} My earlier ``fundamental
-cost'' claim was my own bug --- found, fixed, and reported, not buried.
+cost'' claim was my own bug, found, fixed, and reported, not buried.
 
 \end{document}

@@ -1,40 +1,40 @@
-// Figure 1 — TS-JEPA architecture (masked, action-conditioned transformer)
+// Figure 1 - TS-JEPA architecture (masked, action-conditioned transformer)
 // render (Windows: cairo font path is broken -> use the gd renderer):
 //   dot -Tpng:gd:gd arch_tsjepa.dot -o arch_tsjepa.png
 digraph tsjepa {
-  rankdir=TB; bgcolor="white"; splines=spline; nodesep=0.35; ranksep=0.5;
+  rankdir=TB; bgcolor="white"; splines=spline; nodesep=0.5; ranksep=0.65;
   labelloc="t"; labeljust="l"; fontname="Arial"; fontsize=15; fontcolor="#10151c";
-  label=<<b>Figure 1 &#8212; TS-JEPA: masked, action-conditioned transformer world-model</b><br align="left"/><font point-size="10" color="#5b6673">Solid = inference path (online encoder &#8594; decode). Dashed = training-only: EMA target, JEPA latent loss, dec-anchor &#8212; all dropped at deploy.</font><br align="left"/>>;
+  label=<<b>Figure 1 &#8212; TS-JEPA: masked, action-conditioned transformer world-model</b><br align="left"/><font point-size="10" color="#5b6673">Solid = inference path (online encoder to decode). Dashed = training-only (EMA target, JEPA loss, dec-anchor), dropped at deploy.<br align="left"/>Learned absolute positions cap the horizon at T=60. Loss = 4-term VICReg + dual (online + dec-anchor) reconstruction.<br align="left"/></font>>;
 
   node [shape=box, style="rounded,filled", fontname="Arial", fontsize=11,
-        margin="0.16,0.09", color="#c9d2db", penwidth=1.3, fontcolor="#10151c"];
-  edge [color="#5b6673", fontname="Arial", fontsize=9, arrowsize=0.75];
+        margin="0.20,0.12", color="#c9d2db", penwidth=1.4, fontcolor="#10151c"];
+  edge [color="#5b6673", fontname="Arial", fontsize=9, arrowsize=0.8];
 
-  input  [label="Patient history  x(t0 .. tK)  +  context / known actions\n(disease class, age, sex, responder, UDCA-on month, ERCP months)", fillcolor="#eef2f6"];
-  grid   [label="Masked (features x time) grid\nobserved months kept  -  future months -> learned mask token\n+ learned ABSOLUTE positional embedding  (caps horizon at T = 60)\nknown treatment-plan tokens kept for future months (we know the plan, not the outcome)", fillcolor="#e7eef5"];
-  online [label="Online encoder\nTransformer - 2 layers - 4 heads - d = 48 - FFN 2d = 96", fillcolor="#dbe7f3", color="#3b6ea5"];
-  zon    [label="predicted embeddings  z-hat  at masked (future) months", shape=ellipse, fillcolor="#dbe7f3", color="#3b6ea5"];
-  dec    [label="Decoder -> ConstraintHead  (Figure 2)\ncumsum of non-negative increments from the observed anchor x[K]\nS = creep - ERCP-gated relief  -  fast fields = sigmoid", fillcolor="#dcefe9", color="#0e7c6b"];
-  out    [label="Forecast  x-hat(tK+1 .. tN)\n0 constraint violations  -  stays on-manifold (critic 0.963, 1 seed)", fillcolor="#c7e7dd", color="#0e7c6b", penwidth=1.6];
+  // ---- inference spine (solid) ----
+  input  [label="Patient history  x(t0 .. tK)\n+ context / known actions", fillcolor="#eef2f6"];
+  grid   [label="Masked (features x time) grid\nobserved kept, future to mask token\n+ learned absolute positions", fillcolor="#e7eef5"];
+  online [label="Online encoder\nTransformer: 2 layers, 4 heads, d = 48", fillcolor="#dbe7f3", color="#3b6ea5"];
+  zon    [label="predicted embeddings  z-hat\n(masked / future months)", shape=ellipse, fillcolor="#dbe7f3", color="#3b6ea5"];
+  dec    [label="Decoder to ConstraintHead  (Fig 2)\ncumsum from the observed anchor", fillcolor="#dcefe9", color="#0e7c6b"];
+  out    [label="Forecast  x-hat(tK+1 .. tN)\n0 violations, on-manifold", fillcolor="#c7e7dd", color="#0e7c6b", penwidth=1.7];
 
-  // training-only components -- reached only by dashed edges below; all dropped at inference
-  target [label="EMA target encoder  [training only]\nsees full CLEAN sequence - stop-gradient\ntheta_tgt <- 0.99 theta_tgt + 0.01 theta_online", fillcolor="#f2f5f8", color="#9aa6b2", style="rounded,filled,dashed"];
+  // ---- training-only apparatus (right column, dashed) ----
+  target [label="EMA target encoder\nclean sequence, stop-grad", fillcolor="#f2f5f8", color="#9aa6b2", style="rounded,filled,dashed"];
   ztg    [label="target embeddings  z", shape=ellipse, fillcolor="#f2f5f8", color="#9aa6b2"];
-  jepa   [label="JEPA objective (latent)  [training only]\ninvariance  z-hat -> z  (stop-grad on z)\n+ VICReg variance + covariance (anti-collapse)", fillcolor="#fbf1df", color="#d69b45"];
-  target -> ztg [style=dashed];
+  jepa   [label="JEPA objective\nz-hat to z  +  VICReg", fillcolor="#fbf1df", color="#d69b45"];
 
-  input -> grid;
-  grid  -> online;
-  online -> zon;
-  zon -> dec [label="  online path"];
-  dec -> out;
+  // spine
+  input -> grid -> online -> zon -> dec -> out;
 
-  input -> target [style=dashed, constraint=false, label="  full clean sequence"];
-  zon -> jepa [style=dashed];
-  ztg -> jepa [style=dashed];
-  ztg -> dec  [label="  dec-anchor (target path)", style=dashed];
-  online -> target [label="  EMA update", style=dotted, dir=back, constraint=false, color="#9aa6b2"];
+  // training-only edges, held to the right column
+  input  -> target [style=dashed, constraint=false, label="  clean seq"];
+  online -> target [style=dotted, dir=back, constraint=false, color="#9aa6b2", label="  EMA update"];
+  target -> ztg    [style=dashed];
+  zon    -> jepa   [style=dashed];
+  ztg    -> jepa   [style=dashed];
+  ztg    -> dec    [style=dashed, label="  dec-anchor"];
 
   { rank=same; online; target; }
   { rank=same; zon; ztg; }
+  { rank=same; dec; jepa; }
 }
