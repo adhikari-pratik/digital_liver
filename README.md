@@ -94,6 +94,10 @@ python figures_showcase.py # -> figures/fig_scorecard.png, fig_noise.png, fig_st
 python export_demo_data.py # precompute real rollouts for the interactive demo (inlined into demo.html)
 ```
 
+**Architecture diagrams** (Graphviz sources in `figures/*.dot`; render with `dot -Tpng:gd:gd <f>.dot -o <f>.png`):
+`figures/arch_tsjepa.png` (masked TS-JEPA, train vs inference paths), `figures/arch_constraint_head.png`
+(by-construction constraint head), `figures/arch_denoised_anchor.png` (why JEPA wins under sensor noise).
+
 **Interactive demo:** open **`demo.html`** in a browser (self-contained, no server) — drag *sensor noise*
 and *months since last visit* and watch the memoryless baseline drift while TS-JEPA's denoised anchor
 holds. Every line is a real seed-0 rollout (D29).

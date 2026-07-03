@@ -1,0 +1,26 @@
+// Denoised-anchor mechanism (D29): why TS-JEPA beats the memoryless baseline under sensor noise
+// render: dot -Tpng arch_denoised_anchor.dot -o arch_denoised_anchor.png
+digraph denoise {
+  rankdir=LR; bgcolor="white"; nodesep=0.35; ranksep=0.6;
+  labelloc="t"; labeljust="l"; fontname="Arial"; fontsize=15; fontcolor="#10151c";
+  label=<<b>Figure 3 &#8212; Denoised-anchor: why TS-JEPA beats a memoryless baseline under sensor noise</b><br align="left"/><font point-size="10" color="#5b6673">A memoryless model sees only the one noisy reading x[K]; TS-JEPA denoises the anchor from the whole window. Ablation isolates it as the mechanism.</font><br align="left"/>>;
+  node [shape=box, style="rounded,filled", fontname="Arial", fontsize=11,
+        margin="0.16,0.09", color="#c9d2db", penwidth=1.3, fontcolor="#10151c"];
+  edge [color="#5b6673", fontname="Arial", fontsize=9, arrowsize=0.75];
+
+  obs [label="Noisy observed window\nx(0..K) + sensor noise", fillcolor="#eef2f6"];
+
+  banchor [label="Baseline (memoryless)\nanchors on the single noisy reading x[K]", fillcolor="#e7eef5", color="#3b6ea5"];
+  bfore   [label="cumsum forecast  →  DRIFTS\ncompounds the anchor error", fillcolor="#e7eef5", color="#3b6ea5"];
+
+  enc  [label="TS-JEPA encoder\nattends over the whole window", fillcolor="#dbe7f3", color="#3b6ea5"];
+  sdec [label="state-decode head\nlearned CLEAN estimate  x_hat[K]", fillcolor="#dcefe9", color="#0e7c6b"];
+  jfore [label="cumsum forecast  →  HOLDS\ndenoised anchor · monotone/bounded kept", fillcolor="#c7e7dd", color="#0e7c6b", penwidth=1.6];
+
+  obs -> banchor -> bfore;
+  obs -> enc -> sdec -> jfore;
+
+  note [shape=note, fontsize=10, fillcolor="#fbf1df", color="#d69b45",
+        label="Ablation: force the raw noisy anchor\n→ gain collapses to the baseline.\nThe denoised anchor IS the mechanism\n(sigma=0.10: 0.048 vs 0.076, -37%, 3 seeds)"];
+  sdec -> note [style=dotted, arrowhead=none, constraint=false];
+}

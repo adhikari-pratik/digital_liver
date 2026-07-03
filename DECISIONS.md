@@ -196,6 +196,13 @@ stochastic observation substrate) is exactly what the exercise stripped out. Shi
 commit to JEPA (this architecture) for the real problem. This *replaces* the D13 story as the memo's
 JEPA evidence.
 
+> **Superseded by D20/D29 (the reframe) — read this verdict as the clean-slice finding only.** Two things
+> changed after this was written: (1) M←F·C coupling (D20) moved the baseline held-out number to **0.099**
+> (not the 0.110 above); (2) D29's domain-stress probes show JEPA is not *merely* a tie — it wins noise
+> (−37%, outside seed noise), draws level on staleness, and edges susceptibility. So the shipping story is
+> no longer "ship the baseline" — it is **baseline = the clean-toy prototype, TS-JEPA = the architecture
+> recommended for the real noisy/sparse/high-dim domain** (memo §1, §6).
+
 ---
 
 ## D17. Generator validated against an independent implementation

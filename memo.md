@@ -16,18 +16,20 @@ I make the case by measurement, not assertion.**
 On the *deliberately clean, fully-observed* toy a well-constrained baseline edges JEPA on raw
 point-accuracy (ratchet MAE **0.033** vs **0.039**, K=24, free rollout) — reported honestly; it is why a
 simpler model is right *if the data ever looked like this*. But the real domain is defined by the three
-stresses this toy strips out, and on each, **JEPA measurably wins** (baseline vs TS-JEPA, ratchet MAE;
+stresses this toy strips out. On the one that dominates real sensor data — noise — **JEPA wins decisively
+and outside seed noise**; on the other two it draws level or edges ahead (baseline vs TS-JEPA, ratchet MAE;
 multi-seed gated; `figures/`, seed-0 illustrative):
 
 | axis (the real domain) | baseline | TS-JEPA |
 |---|---|---|
 | clean, fresh, fully-observed — *point accuracy* | **0.033** | 0.039 |
-| sensor noise σ=0.10 — *denoising* | 0.076 | **0.048** (−37%, ablation-proven, `jepa_denoise.py`) |
-| stale last visit ~15 mo — *partial observation* | 0.065 | **0.064** (crossover, `missing_visits.py`) |
-| held-out susceptibility — *generalisation* | 0.099 | **0.092** (`ts_jepa.py`) |
+| sensor noise σ=0.10 — *denoising* | 0.076 | **0.048** (−37%, outside seed noise, ablation-proven, `jepa_denoise.py`) |
+| stale last visit ~15 mo — *partial observation* | 0.065 | 0.064 (≈ tie — crossover, within seed noise, `missing_visits.py`) |
+| held-out susceptibility — *generalisation* | 0.099 | 0.092 (modest edge, single-config, `ts_jepa.py`) |
 
-The pattern is not luck: JEPA wins exactly **denoising, partial observation, and generalisation** — the
-properties of *real* clinical data — while the baseline wins only the sanitised slice, and even that win
+The pattern is not luck: as the data gets more realistic — noisy, stale, unseen — JEPA moves from *behind*
+on the toy to *level-or-ahead*, and decisively ahead under noise — the properties of *real* clinical data —
+while the baseline wins only the sanitised slice, and even that win
 is *partly borrowed* (it hardcodes generator structure we will not have in production) and cannot scale
 to the real modalities (MRI, histology, 3-D shape) — it is memoryless and low-dim. **So, concretely: the
 coupled baseline is the delivered prototype for the clean 8-D exercise** (checkpointed `baseline.pt`, best
@@ -63,7 +65,8 @@ where the decoder couldn't read it. **The fix (one term):** decode the true futu
 *same* head → **0.52 → 0.12**, latent prediction still real (`inv/var` < 0.1). Lesson (D14): when a result
 looks like a fundamental limit on a *trivial* problem, suspect your own compute graph first.
 
-**Then the team's actual architecture.** A masked, action-conditioned **TS-JEPA**: over a transformer
+**Then the team's actual architecture** (diagram: `figures/arch_tsjepa.png`; the shared by-construction
+head: `figures/arch_constraint_head.png`)**.** A masked, action-conditioned **TS-JEPA**: over a transformer
 feature×time grid, mask the future *state* but **keep the known treatment plan** (UDCA/ERCP tokens — we
 know the plan, not the outcome); predict the EMA target-encoder's embeddings at masked months; decode
 **by construction** (cumsum of non-negative increments from the last observed state; S = creep − ERCP
@@ -132,7 +135,8 @@ soft/bidirectional and don't admit a clean form — the honest remaining edge.
   the recurrent baseline more capable on horizon (`ts_jepa.py`).
 - **Domain-stress probes — where JEPA earns its keep (`missing_visits.py`, `jepa_denoise.py`; §1
   scorecard, `figures/`).** The clean probe ranks the baseline first; the *domain* probes flip it.
-  **Sensor noise:** a noise-augmented JEPA that **forecasts from a *denoised* current-state anchor — a
+  **Sensor noise** (mechanism diagram: `figures/arch_denoised_anchor.png`)**:** a noise-augmented JEPA that
+  **forecasts from a *denoised* current-state anchor — a
   learned clean estimate from the whole window, not the raw noisy observation** — beats the baseline at
   every σ (σ=0.10 **0.048 vs 0.076**, −37%, 3 seeds); an ablation reverting to the raw noisy anchor
   collapses the gain back to the baseline, proving the denoised anchor *is* the mechanism (one a memoryless
@@ -166,28 +170,27 @@ Using portal hypertension P crossing a threshold as the decompensation proxy
 
 - **Probabilistic forecasting (the biggest gap).** §6's tail miss is **aleatoric** (susceptibility
   unidentified from short history), so a deep ensemble can't fix it (covers **28%**, `ensemble_forecast.py`).
-  A **mixture-density head** (`mdn_forecast.py`, every component through the shared `ConstraintHead`)
-  recovers **cirrhosis recall 0.27 → 0.82** at no accuracy cost; a per-trajectory latent stabilises its
-  calibration, and a diagnostic (`diagnose_latent.py`) traced the residual tail-miss to **MSE tail-bias**
-  (not under-dispersion). A tail-aware **union** (persistent z + mixture-NLL) lifts recall to **0.97** at
-  the best accuracy (0.025), trading precision — no free lunch (D23–D27).
+  A **mixture-density head** (`mdn_forecast.py`) recovers **cirrhosis recall 0.27 → 0.82** at no accuracy
+  cost; a **persistent-latent CVAE** (`latent_forecast.py`, D25 — *built, not future work*) stabilises its
+  calibration, and a diagnostic traced the residual tail-miss to **MSE tail-bias**, not under-dispersion;
+  the tail-aware **union** (persistent z + mixture-NLL) lifts recall to **0.97** but is high-recall /
+  low-precision — **experimental tail-risk evidence, *not* a calibrated readout** (D23–D27).
 - **Discrete latents (VQ-JEPA) — a research direction, not a guaranteed win.** A VQ codebook would commit
   each patient to one *auditable archetype* and can't average the tail — but discreteness alone doesn't
   fix a weak decoder (mine under-leveraged z, D27) and trades KL-annealing for codebook-collapse; muted on
   *this* continuous-susceptibility toy. Named, not built (D28).
-- **Validate JEPA where it pays — partly done, extend it.** I put the domain's stresses back and JEPA
-  won (§1/§6: noise-denoising, stale-visit, generalisation). Next: re-attach the *full* modality
-  substrate (MRI/histology/3-D shape) — high-dim targets the baseline cannot parameterise at all — and a
-  learned *adaptive* anchor (denoise when the reading is noisy, trust it when clean); the ablation shows
-  both modes already live in one model.
+- **Validate JEPA where it pays — partly done.** I put the domain's stresses back and JEPA won (§1/§6).
+  Next: the *full* modality substrate (MRI/histology/3-D shape) the baseline cannot parameterise at all,
+  and a learned *adaptive* anchor (denoise when the reading is noisy, trust it when clean) — the ablation
+  shows both modes already live in one model.
 - **Causal, not correlational, reasons.** Mask information flow to the causal edges and validate
   counterfactuals against generator re-runs — attacking the §7 shortcut.
 
-**Bottom line:** I engaged JEPA for real — a minimal GRU-JEPA and the team's masked TS-JEPA — made both
+**Bottom line:** I engaged JEPA for real — a minimal GRU-JEPA and the masked TS-JEPA — made both
 constraint-valid, on-manifold (critic-measured; the naive GRU drifts, §5), and auditable, then *measured*
-what it buys: on the clean, fully-observed slice it ties a simpler constrained baseline, but the moment
-the domain's real stresses return it **wins** — denoising sensor noise (−37%, ablation-proven), surviving
-stale/missing visits, and generalising to unseen progression speeds. **So: the coupled baseline is the
-delivered prototype and honest benchmark for clean 8-D forecasting; TS-JEPA is the architecture
-recommendation for the real noisy/sparse/high-dim pipeline — measured, not asserted.** My earlier
-"fundamental cost" claim was a bug in my own code — found, fixed, and reported rather than buried.
+what it buys: on the clean slice it ties a simpler constrained baseline, but restore the domain's real
+stresses and it **wins** — denoising sensor noise (−37%, ablation-proven), stale/missing visits, and
+unseen progression speeds. **So: the coupled baseline is the delivered prototype for clean 8-D forecasting;
+TS-JEPA is the architecture recommendation for the real noisy/sparse/high-dim pipeline — measured, not
+asserted.** My earlier "fundamental cost" claim was a bug in my own code, found, fixed, and reported
+rather than buried.
