@@ -41,7 +41,7 @@ def main():
 
     print(f"  ratchet MAE (K={K_OBS}, mixture-mean) = {acc:.4f}   (point baseline 0.033)")
     print(f"  cirrhosis recall @q90 = {r90:.2f}  prec {p90:.2f}   |   @q95 = {r95:.2f}  prec {p95:.2f}"
-          f"   (point baseline recall 0.27)")
+          f"   (point-estimate tail recall: 0.27 decompensation, 0/20 cirrhosis-onset)")
     print(f"  90% interval coverage = {cov:.2f}")
     print("\n  3-seed aggregate (memo sec 1/8, run mdn_forecast.py): MAE 0.028+/-0.002, "
           "recall@q90 0.82+/-0.10, coverage 0.70+/-0.15.")

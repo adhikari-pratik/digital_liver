@@ -150,18 +150,18 @@ Using portal hypertension P crossing a threshold as the decompensation proxy
 - **Structural, auditable for free.** `P(t) = P(t₀) + Σ non-negative increments` — a running total,
   every step inspectable, and **the same audit runs on the JEPA** (identical accumulation): auditability
   transfers to the latent model.
-- **Attribution reveals a correlational shortcut** (gradients + perturbation agree): the model keys the
-  P-increment on **flare (~62%)**, slow drivers F/P only ~16% — flare *leads* the A/C surges that raise the
-  ratchets, so it's a faithful predictor whose reasons are *correlational, not causal*: the risk the brief
-  flags.
+- **Attribution reveals a correlational shortcut** (model-faithful perturbation, `explain.py`): the model
+  keys the P-increment on **flare (~62%)**, slow drivers F/P only ~16% — flare *leads* the A/C surges that
+  raise the ratchets, so it's a faithful predictor whose reasons are *correlational, not causal*: the risk
+  the brief flags.
 
 ## 8. Residual risk and what I would do next
 
 - **Probabilistic forecasting (the biggest gap).** §6's tail miss is **aleatoric** (susceptibility
   unidentified from short history), so a deep ensemble can't fix it (covers **28%**, `ensemble_forecast.py`).
-  A **mixture-density head** (`mdn_forecast.py`) recovers **cirrhosis recall 0.27 → 0.82** at no accuracy
-  cost; a **persistent-latent CVAE** (`latent_forecast.py`, D25 — *built, not future work*) stabilises its
-  calibration. The tail-aware **union** (persistent z + mixture-NLL) lifts recall to **0.97** but is
+  A **mixture-density head** (`mdn_forecast.py`) lifts **tail recall to 0.82** (cirrhosis @q90; the point
+  estimate catches almost none of the tail — §6) at no accuracy cost; a **persistent-latent CVAE**
+  (`latent_forecast.py`, D25 — *built, not future work*) stabilises its calibration. The tail-aware **union** (persistent z + mixture-NLL) lifts recall to **0.97** but is
   high-recall / low-precision — **experimental tail-risk evidence, *not* a calibrated readout** (D23–D27).
 - **Discrete latents (VQ-JEPA) — a research direction, not a guaranteed win.** A VQ codebook would commit
   each patient to one *auditable archetype* and can't average the tail — but discreteness alone doesn't fix

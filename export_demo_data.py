@@ -4,9 +4,10 @@ patients, across a grid of sensor-noise sigma x months-since-last-visit, roll ou
 baseline and the denoised-anchor TS-JEPA and record the fibrosis-F trajectories + ratchet MAE. The
 interactive page embeds this JSON and just looks values up as the sliders move.
 
-Output: D:\\tmp\\demo_data.json  (seed 0; the same models/eval as jepa_denoise.py / figures_showcase.py)
+Output: demo_data.json in the repo root (seed 0; same models/eval as jepa_denoise.py / figures_showcase.py)
 """
 import json
+import os
 import numpy as np
 import torch
 
@@ -70,7 +71,7 @@ def main():
 
     data = {"sigmas": SIGMAS, "gaps": [24 - k for k in K0S], "K0s": K0S,
             "T": T, "patients": patients, "grid": grid}
-    out_path = r"D:\tmp\demo_data.json"
+    out_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "demo_data.json")
     with open(out_path, "w") as f:
         json.dump(data, f, separators=(",", ":"))
     print(f"  wrote {out_path}  ({len(json.dumps(data))//1024} KB)")

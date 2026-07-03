@@ -154,7 +154,7 @@ def main(seeds=(0, 1, 2)):
     print(f"\n=== MDN distributional head, {len(seeds)} seeds (mean +/- sd) ===")
     for i, name in enumerate(lbl):
         print(f"  {name:14} = {m[i]:.3f} +/- {sd[i]:.3f}")
-    print("  reference: point baseline MAE 0.033, tail recall 0.27; deep ensemble coverage 0.28 (D19)")
+    print("  reference: point baseline MAE 0.033, decompensation-tail recall 0.27; deep ensemble coverage 0.28 (D19)")
 
 
 if __name__ == "__main__":
