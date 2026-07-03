@@ -20,3 +20,6 @@ demo_data.json
 Thumbs.db
 
 .claude
+
+# The take-home prompt itself (their assessment material; keep local, do not publish)
+ai_engineer_takehome_world_model.pdf
