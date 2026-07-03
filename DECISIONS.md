@@ -562,6 +562,18 @@ tokenised dynamics).
 unqualified trump card. Ship the continuous story that is measured end-to-end; name the discrete upgrade
 as next.
 
+**Follow-up review (verified critically, not agreed to).** A later pass rightly softened "production next
+step" to "a research direction after the persistent latent," and added two sharp caveats I've folded in:
+(1) **discreteness alone does NOT prevent averaged trajectories if the decoder/transition head is weak** —
+directly relevant here, since my diagnostic (D27, Q2) measured the decoder *under-leveraging* z; a VQ code
+feeding the same weak decoder could still average. (2) VQ can *hurt* calibration with too few codes or
+usage collapse. It also flagged the MRI PSNR/SSIM analogy as overconfident — correct, and moot here: I
+grounded the argument in my *measured* MSE tail-bias, not that analogy. **The one thing that review got
+wrong: it treated the persistent-latent CVAE as future work ("the next implementation would be a persistent
+latent posterior, CVAE-style"). It is already built and measured — `latent_forecast.py` (D25) + the union
+(D27). So "ship as-is" is right, but "as-is" already contains the CVAE; there is nothing left to build for
+this submission.**
+
 ---
 
 ## D12. Boundary experiment — tried to EMPIRICALLY show JEPA winning; it did not (dead-end)

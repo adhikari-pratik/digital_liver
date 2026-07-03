@@ -164,11 +164,12 @@ Using portal hypertension P crossing a threshold as the decompensation proxy
   **MSE tail-bias**. The tail-aware **union** (persistent z + per-step mixture-NLL, `union_forecast.py`)
   lifts **recall to 0.97** at the **best accuracy** (0.025), leaving a precision/coverage tradeoff — no
   free lunch (D23–D27).
-- **Discrete latents (VQ-JEPA) for production.** The measured tail-bias *is* the continuous-latent
-  "blur" — a mean-seeking objective averages fast/slow progressors into an impossible middle. Same
-  TS-JEPA objective, discrete geometry: a **VQ codebook** commits each patient to one *auditable
-  clinical archetype* (explainability, not a blur). Honest caveats (D28): codebook-collapse replaces
-  KL-annealing, and the edge is muted on *this* toy where the hidden factor (susceptibility) is continuous.
+- **Discrete latents (VQ-JEPA) — a research direction, not a guaranteed win.** The measured tail-bias
+  is the continuous-latent "blur" (a mean-seeking objective averages fast/slow progressors into an
+  impossible middle). Same TS-JEPA objective, discrete geometry: a **VQ codebook** would commit each
+  patient to one *auditable archetype* (explainability). But discreteness alone doesn't fix a weak
+  decoder (mine *under-leveraged* z — D27), it trades KL-annealing for codebook-collapse, and its edge
+  is muted on *this* continuous-susceptibility toy. So: named, not built (caveats in D28).
 - **Validate JEPA where it pays.** Re-attach the real modality substrate; once observations carry
   un-forecastable detail, the latent should overtake raw-space prediction — the direct test of §2,
   TS-JEPA **already built** for it (D12).
